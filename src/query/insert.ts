@@ -1,14 +1,7 @@
 // We will work a lot with any since we're trying to be as generic as possible to insert anything in the db.
 // deno-lint-ignore-file no-explicit-any
-import { join } from "https://deno.land/std@0.141.0/path/win32.ts";
 import { FieldTransformer } from "./query-builder.ts";
 import { QueryPart } from "./query-part.ts";
-
-interface InsertParts {
-  fields: string[];
-  values: any[];
-  preparedValues: string[];
-}
 
 interface InsertFields {
   fields: string[];
@@ -66,14 +59,11 @@ export class Insert extends QueryPart {
 
   private extractValues(): InsertValues {
     const values: any[] = [];
-    const preparedValuesArray = []; // [($1, $2, $3, $4),($1, $2, $3, $4)]
-    //    let preparedValues = ""
+    const preparedValuesArray = [];
 
-    // ($1, $2, $3, $4), ($1, $2, $3, $4)
     for (const object of this.objects) {
-      const objectPreparedValuesArray = []; // [$1, $2, $3, $4]
+      const objectPreparedValuesArray = [];
 
-      // $1, $2, $3, $4
       for (const value of Object.values(object)) {
         const val = this.escapeSingleQuotes(value);
         objectPreparedValuesArray.push(`$${this.preparedArgsCounter++}`);
@@ -90,7 +80,4 @@ export class Insert extends QueryPart {
   private escapeSingleQuotes(value: any): any {
     return typeof value === "string" ? value.replaceAll("'", "''") : value;
   }
-
-  // INSERT INTO wine (column1, column2) VALUES (1, 'a')
-  // INSERT INTO wine VALUES (1, 'a')
 }
