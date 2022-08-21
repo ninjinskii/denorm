@@ -3,7 +3,7 @@
 // demander un transformer: un objet avec deux fonctions: une pour créer le mapper client -> db et une pour le db->client
 
 import { From } from "./from.ts";
-import { FieldTransformer } from "./query-part.ts";
+import { FieldTransformer, QueryPart } from "./query-part.ts";
 import { Select } from "./select.ts";
 import { InternalWhereCondition, Where, WhereCondition } from "./where.ts";
 
@@ -26,6 +26,9 @@ export class QueryBuilder {
   private _whereConditions: Array<WhereCondition | WhereCondition[]> = [];
   private _agregators: Agregator[] = [];
   private whereIsCalled = false;
+
+  // For test purposes
+  private parts: QueryPart[] = [];
 
   constructor(transformer: FieldTransformer) {
     this.transformer = transformer;
@@ -61,14 +64,15 @@ export class QueryBuilder {
     this._whereConditions.push(condition);
   }
 
-  // combineAll(...parts: QueryPart[]): QueryBuilder {
-  //   // Does not work
-  //   // this.parts.forEach((part) => {
-  //   //   part.setTransformer(this.transformer);
-  //   // });
-  //   this.parts.push(...parts);
-  //   return this;
-  // }
+  // For test puposes
+  private combineAll(...parts: QueryPart[]): QueryBuilder {
+    // Does not work
+    // this.parts.forEach((part) => {
+    //   part.setTransformer(this.transformer);
+    // });
+    this.parts.push(...parts);
+    return this;
+  }
 
   private prepareWhere() {
     const agregators = this._agregators;
@@ -120,6 +124,11 @@ export class QueryBuilder {
     }
 
     this._where = where;
+  }
+
+  // For test purposes
+  private terminateTest() {
+    this.parts.map((part) => part.toText()).join(" ") + ";";
   }
 
   terminate() {

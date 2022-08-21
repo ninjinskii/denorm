@@ -123,17 +123,17 @@ Deno.test("Select + From, single values", () => {
   const select = new Select("*");
   const from = new From("wine");
 
-  builder.combineAll(select, from);
-  assertEquals(builder.terminate(), "SELECT * FROM wine;");
+  builder["combineAll"](select, from);
+  assertEquals(builder["terminateTest"](), "SELECT * FROM wine;");
 });
 
 Deno.test("Select + From, multiple values", () => {
   const select = new Select("wineId", "comment");
   const from = new From("wine", "bottle");
 
-  builder.combineAll(select, from);
+  builder["combineAll"](select, from);
   assertEquals(
-    builder.terminate(),
+    builder["terminateTest"](),
     "SELECT wine_id,comment FROM wine,bottle;",
   );
 });
@@ -144,9 +144,9 @@ Deno.test("Select + From + Where, multiple values", () => {
   const where = new Where({ field: "wineId", equals: 1 })
     .and({ field: "comment", equals: "Hi mom!" });
 
-  builder.combineAll(select, from, where);
+  builder["combineAll"](select, from, where);
   assertEquals(
-    builder.terminate(),
+    builder["terminateTest"](),
     "SELECT wine_id,comment FROM wine,bottle WHERE wine_id = 1 AND comment = 'Hi mom!';",
   );
 });
