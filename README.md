@@ -35,3 +35,9 @@ and use .and() & .or() using arrays. An array of and() will be placed inside par
       .or({field: "age", sup: 30})
       .or({field: "age", equals: 32})
 ```
+
+## Run tests
+```bash
+docker-compose up -d
+docker-compose exec web deno test --allow-env --allow-net --allow-read /tests
+```
