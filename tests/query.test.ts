@@ -1,5 +1,6 @@
 import { assertEquals } from "../deps.ts";
 import { From } from "../src/query/from.ts";
+import { Insert } from "../src/query/insert.ts";
 import { FieldTransformer, QueryBuilder } from "../src/query/query-builder.ts";
 import { Select } from "../src/query/select.ts";
 import { Where } from "../src/query/where.ts";
@@ -116,6 +117,18 @@ Deno.test("Where combined only multiple equals AND & OR", () => {
   assertEquals(
     where,
     "WHERE (comment = 'Hi mom!' AND type = 2) OR (type = 1 OR type = 3)",
+  );
+});
+
+Deno.test("Insert into", () => {
+  const insert = new Insert(transformer, "wine", [
+    { wineId: 1, comment: "Bon", tastingTasteComment: "Je l'ai bien aimé" },
+    { wineId: 2, comment: "", tastingTasteComment: "Moyen" },
+  ]);
+
+  assertEquals(
+    insert.toText(),
+    "INSERT INTO wine ($1, $2, $3) VALUES ($4, $5, $6), ($7, $8, $9)",
   );
 });
 
