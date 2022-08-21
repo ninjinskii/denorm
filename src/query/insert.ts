@@ -1,22 +1,16 @@
-import { clientMapper } from "../mock/mock-mapper.ts";
-import { ClientFieldMapper } from "./query-builder.ts";
-import { QueryPart } from "./query-part.ts";
+import { FieldTransformer, QueryPart } from "./query-part.ts";
 
 export class Insert extends QueryPart {
-  private readonly mapper: ClientFieldMapper = clientMapper;
+  private transformer: FieldTransformer;
 
-  // TODO : pass client mapper as constructor argument
-  constructor() {
+  constructor(transformer: FieldTransformer) {
     super();
-    //this.mapper = mapper;
+    this.transformer = transformer;
   }
 
   toText(): string {
-    
   }
 
-
   escapeFinalUserData() {
-
   }
 }
