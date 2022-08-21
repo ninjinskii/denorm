@@ -1,20 +1,16 @@
-// add semi colon to all queries
-// create the mapper and pass it to query parts
-// demander un transformer: un objet avec deux fonctions: une pour créer le mapper client -> db et une pour le db->client
-
 import { From } from "./from.ts";
-import { FieldTransformer, QueryPart } from "./query-part.ts";
 import { Select } from "./select.ts";
 import { InternalWhereCondition, Where, WhereCondition } from "./where.ts";
 
-// Maps client field name to db field name
-export interface ClientFieldMapper {
-  [clientField: string]: string;
+export interface FieldTransformer {
+  toDbField: (clientName: string) => string;
+  fromDbField: (fieldName: string) => string;
 }
 
-export interface DbFieldMapper {
-  [dbField: string]: string;
-}
+const defaultTransformer = {
+  toDbField: (clientName: string) => clientName,
+  fromDbField: (fieldName: string) => fieldName,
+};
 
 type Agregator = "AND" | "OR";
 
@@ -27,16 +23,12 @@ export class QueryBuilder {
   private _agregators: Agregator[] = [];
   private whereIsCalled = false;
 
-  // For test purposes
-  private parts: QueryPart[] = [];
-
   constructor(transformer: FieldTransformer) {
     this.transformer = transformer;
   }
 
   select(...fields: string[]): QueryBuilder {
-    const dbFields = fields.map((f) => this.transformer.toDbField(f));
-    this._select = new Select(...dbFields);
+    this._select = new Select(this.transformer, ...fields);
     return this;
   }
 
@@ -46,9 +38,8 @@ export class QueryBuilder {
   }
 
   where(condition: WhereCondition): QueryBuilder {
-    const dbField = this.transformer.toDbField(condition.field);
-    const cond = { ...condition, field: dbField };
-    this._whereConditions.push(cond);
+    this.whereIsCalled = true;
+    this._whereConditions.push(condition);
     return this;
   }
 
@@ -56,21 +47,13 @@ export class QueryBuilder {
     this.throwIfNotWhere();
     this._agregators.push("AND");
     this._whereConditions.push(condition);
+    return this;
   }
 
   or(condition: WhereCondition | WhereCondition[]) {
     this.throwIfNotWhere();
     this._agregators.push("OR");
     this._whereConditions.push(condition);
-  }
-
-  // For test puposes
-  private combineAll(...parts: QueryPart[]): QueryBuilder {
-    // Does not work
-    // this.parts.forEach((part) => {
-    //   part.setTransformer(this.transformer);
-    // });
-    this.parts.push(...parts);
     return this;
   }
 
@@ -81,7 +64,7 @@ export class QueryBuilder {
 
     // Check if first conditions is not bounded with others (parenthesis), we settle it in constructor
     if (!Array.isArray(conditions[0])) {
-      where = new Where(conditions.shift() as WhereCondition);
+      where = new Where(this.transformer, conditions.shift() as WhereCondition);
 
       for (const agregator of agregators) {
         if (agregator === "AND") {
@@ -101,7 +84,7 @@ export class QueryBuilder {
         }
       }
     } else {
-      where = new Where();
+      where = new Where(this.transformer);
 
       // If this bug: we might need to reverse treatment of agregator and conditions
       for (const agregator of agregators) {
@@ -126,17 +109,24 @@ export class QueryBuilder {
     this._where = where;
   }
 
-  // For test purposes
-  private terminateTest() {
-    this.parts.map((part) => part.toText()).join(" ") + ";";
-  }
+  execute(): string {
+    this.healthCheck();
 
-  terminate() {
-    this.prepareWhere();
+    if (this._whereConditions.length) {
+      this.prepareWhere();
+    }
+
     const parts = [this._select, this._from, this._where];
-    const fullQuery = parts.map((part) => part?.toText()).join(" ") + ";";
+    const fullQuery = parts.map((part) => part?.toText()).join(" ").trim() +
+      ";";
     this.reset();
     return fullQuery;
+  }
+
+  private healthCheck() {
+    if (this._select && !this._from) {
+      throw new Error("select() called but not from()");
+    }
   }
 
   private reset() {

@@ -1,23 +1,30 @@
 import { assertEquals } from "../deps.ts";
 import { From } from "../src/query/from.ts";
-import { QueryBuilder } from "../src/query/query-builder.ts";
-import { FieldTransformer } from "../src/query/query-part.ts";
+import { FieldTransformer, QueryBuilder } from "../src/query/query-builder.ts";
 import { Select } from "../src/query/select.ts";
 import { Where } from "../src/query/where.ts";
 import { camelCase, snakeCase } from "../src/util/case.ts";
 
+const transformer: FieldTransformer = {
+  toDbField: (clientField) => snakeCase(clientField),
+  fromDbField: (dbField) => camelCase(dbField),
+};
+
+const builder = new QueryBuilder(transformer);
+
 Deno.test("Select all", () => {
-  const select = new Select("*").toText();
+  const select = new Select(transformer, "*").toText();
   assertEquals(select, "SELECT *");
 });
 
 Deno.test("Select single field", () => {
-  const select = new Select("wineId").toText();
+  const select = new Select(transformer, "wineId").toText();
   assertEquals(select, "SELECT wine_id");
 });
 
 Deno.test("Select multiple fields", () => {
-  const select = new Select("wineId", "comment", "tastingId").toText();
+  const select = new Select(transformer, "wineId", "comment", "tastingId")
+    .toText();
   assertEquals(select, "SELECT wine_id,comment,tasting_id");
 });
 
@@ -33,13 +40,13 @@ Deno.test("From multiple tables", () => {
 
 Deno.test("Where single equals int", () => {
   const conditions = { field: "wineId", equals: 1 };
-  const where = new Where(conditions).toText();
+  const where = new Where(transformer, conditions).toText();
   assertEquals(where, "WHERE wine_id = 1");
 });
 
 Deno.test("Where single equals string", () => {
   const conditions = { field: "comment", equals: "Hi mom!" };
-  const where = new Where(conditions).toText();
+  const where = new Where(transformer, conditions).toText();
   assertEquals(where, "WHERE comment = 'Hi mom!'");
 });
 
@@ -49,12 +56,12 @@ Deno.test("Where single equals string", () => {
 //     field: "comment",
 //     equals: `Belle "explosion" de saveur à l'arrivée en bouche`,
 //   };
-//   const where = new Where(conditions).toText();
+//   const where = new Where(transformer, conditions).toText();
 //   assertEquals(where, "WHERE comment = 'Belle explosion de saveur à l'arrivée en bouche'");
 // });
 
 Deno.test("Where two equals AND", () => {
-  const conditions = new Where({ field: "wineId", equals: 1 })
+  const conditions = new Where(transformer, { field: "wineId", equals: 1 })
     .and({ field: "comment", equals: "Hi mom!" });
 
   const where = conditions.toText();
@@ -62,7 +69,7 @@ Deno.test("Where two equals AND", () => {
 });
 
 Deno.test("Where multiple equals AND", () => {
-  const conditions = new Where({ field: "wineId", equals: 1 })
+  const conditions = new Where(transformer, { field: "wineId", equals: 1 })
     .and({ field: "comment", equals: "Hi mom!" })
     .and({ field: "type", equals: 1 });
 
@@ -71,7 +78,7 @@ Deno.test("Where multiple equals AND", () => {
 });
 
 Deno.test("Where multiple equals AND & OR", () => {
-  const conditions = new Where({ field: "wineId", equals: 1 })
+  const conditions = new Where(transformer, { field: "wineId", equals: 1 })
     .and({ field: "comment", equals: "Hi mom!" })
     .or({ field: "type", equals: 1 });
 
@@ -80,7 +87,7 @@ Deno.test("Where multiple equals AND & OR", () => {
 });
 
 Deno.test("Where combined multiple equals AND", () => {
-  const conditions = new Where({ field: "wineId", equals: 1 })
+  const conditions = new Where(transformer, { field: "wineId", equals: 1 })
     .and([{ field: "comment", equals: "Hi mom!" }, {
       field: "type",
       equals: 2,
@@ -95,7 +102,7 @@ Deno.test("Where combined multiple equals AND", () => {
 });
 
 Deno.test("Where combined only multiple equals AND & OR", () => {
-  const conditions = new Where()
+  const conditions = new Where(transformer)
     .and([
       { field: "comment", equals: "Hi mom!" },
       { field: "type", equals: 2 },
@@ -112,41 +119,35 @@ Deno.test("Where combined only multiple equals AND & OR", () => {
   );
 });
 
-// Building the blocks
-const transformer: FieldTransformer = {
-  toDbField: (clientName) => snakeCase(clientName),
-  fromDbField: (fieldName) => camelCase(fieldName),
-};
-const builder = new QueryBuilder(transformer);
-
+// Building blocks
 Deno.test("Select + From, single values", () => {
-  const select = new Select("*");
-  const from = new From("wine");
+  const query = builder
+    .select("*")
+    .from("wine")
+    .execute();
 
-  builder["combineAll"](select, from);
-  assertEquals(builder["terminateTest"](), "SELECT * FROM wine;");
+  assertEquals(query, "SELECT * FROM wine;");
 });
 
 Deno.test("Select + From, multiple values", () => {
-  const select = new Select("wineId", "comment");
-  const from = new From("wine", "bottle");
+  const query = builder
+    .select("wineId", "comment")
+    .from("wine", "bottle")
+    .execute();
 
-  builder["combineAll"](select, from);
-  assertEquals(
-    builder["terminateTest"](),
-    "SELECT wine_id,comment FROM wine,bottle;",
-  );
+  assertEquals(query, "SELECT wine_id,comment FROM wine,bottle;");
 });
 
 Deno.test("Select + From + Where, multiple values", () => {
-  const select = new Select("wineId", "comment");
-  const from = new From("wine", "bottle");
-  const where = new Where({ field: "wineId", equals: 1 })
-    .and({ field: "comment", equals: "Hi mom!" });
+  const query = builder
+    .select("wineId", "comment")
+    .from("wine", "bottle")
+    .where({ field: "wineId", equals: 1 })
+    .and({ field: "comment", equals: "Hi mom!" })
+    .execute();
 
-  builder["combineAll"](select, from, where);
   assertEquals(
-    builder["terminateTest"](),
+    query,
     "SELECT wine_id,comment FROM wine,bottle WHERE wine_id = 1 AND comment = 'Hi mom!';",
   );
 });

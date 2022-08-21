@@ -1,11 +1,14 @@
+import { FieldTransformer } from "./query-builder.ts";
 import { QueryPart } from "./query-part.ts";
 
 export class Select extends QueryPart {
   private readonly projection: string[];
+  private transformer: FieldTransformer;
 
-  constructor(...projection: string[]) {
+  constructor(transformer: FieldTransformer, ...projection: string[]) {
     super();
     this.projection = projection;
+    this.transformer = transformer;
   }
 
   toText(): string {
@@ -23,8 +26,6 @@ export class Select extends QueryPart {
       if (this.projection.length > 1 && clientField === "*") {
         throw new Error("Invalid request");
       }
-
-      console.log(this.transformer);
 
       return this.transformer.toDbField(clientField);
     });

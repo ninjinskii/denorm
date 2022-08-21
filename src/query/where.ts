@@ -1,3 +1,4 @@
+import { FieldTransformer } from "./query-builder.ts";
 import { QueryPart } from "./query-part.ts";
 
 export interface WhereCondition {
@@ -21,10 +22,12 @@ export interface InternalWhereCondition {
 
 export class Where extends QueryPart {
   private conditions: WhereCondition[] = [];
+  private transformer: FieldTransformer;
   private combinedOnly = false;
 
-  constructor(condition?: WhereCondition) {
+  constructor(transformer: FieldTransformer, condition?: WhereCondition) {
     super();
+    this.transformer = transformer;
 
     if (condition) {
       this.conditions.push(condition);
@@ -93,11 +96,6 @@ export class Where extends QueryPart {
   private mapFields() {
     this.conditions = this.conditions.map((cond) => {
       const dbField = this.transformer.toDbField(cond.field);
-
-      if (!dbField) {
-        throw new Error("Unknown field");
-      }
-
       return { ...cond, field: dbField };
     });
   }
