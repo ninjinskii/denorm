@@ -65,7 +65,7 @@ export class QueryBuilder {
 
   // We can't guess the type
   // deno-lint-ignore no-explicit-any
-  insert(tableName: string, objects: any): QueryBuilderAfterInsert {
+  insert(tableName: string, objects: any[]): QueryBuilderAfterInsert {
     this._insert = new Insert(this.transformer, tableName, objects);
     return this;
   }
@@ -127,6 +127,14 @@ export class QueryBuilder {
   execute<T = any>(): Promise<T[]> {
     const preparedQuery = this.getPreparedQuery();
     return this.executor.submitQuery(preparedQuery);
+  }
+
+  // Let the developer decide, defaulting to any in case no type is needed
+  // deno-lint-ignore no-explicit-any
+  async executeAndGetFirst<T = any>(): Promise<T> {
+    const preparedQuery = this.getPreparedQuery();
+    const array = await this.executor.submitQuery<T>(preparedQuery);
+    return array[0];
   }
 
   getPreparedQuery(): PreparedQuery {
@@ -198,6 +206,7 @@ interface QueryBuilderAfterFrom {
   where: (condition: WhereCondition) => QueryBuilderAfterWhere;
   getPreparedQuery: () => PreparedQuery;
   execute: <T>() => Promise<T[]>;
+  executeAndGetFirst: <T>() => Promise<T>;
 }
 
 interface QueryBuilderAfterWhere {
