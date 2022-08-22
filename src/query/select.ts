@@ -3,9 +3,9 @@ import { PreparedQuery, QueryPart } from "./query-part.ts";
 
 export class Select extends QueryPart {
   private readonly projection: string[];
-  private transformer: FieldTransformer;
+  private transformer: FieldTransformer | null;
 
-  constructor(transformer: FieldTransformer, ...projection: string[]) {
+  constructor(transformer: FieldTransformer | null, ...projection: string[]) {
     super();
     this.projection = projection;
     this.transformer = transformer;
@@ -27,7 +27,7 @@ export class Select extends QueryPart {
         throw new Error("Invalid request");
       }
 
-      return this.transformer.toDbField(clientField);
+      return this.transformer?.toDbField(clientField) || clientField;
     });
   }
 }

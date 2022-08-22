@@ -9,12 +9,12 @@ interface InsertValues {
 }
 
 export class Insert extends QueryPart {
-  private transformer: FieldTransformer;
+  private transformer: FieldTransformer | null;
   private tableName: string;
   private objects: any[];
 
   constructor(
-    transformer: FieldTransformer,
+    transformer: FieldTransformer | null,
     tableName: string,
     objects: any[],
   ) {
@@ -44,7 +44,7 @@ export class Insert extends QueryPart {
     const fields = [];
 
     for (const key of Object.keys(exampleObject)) {
-      const field = this.transformer.toDbField(key);
+      const field = this.transformer?.toDbField(key) || key;
       fields.push(field);
     }
 

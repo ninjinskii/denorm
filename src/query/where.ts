@@ -22,10 +22,13 @@ export interface InternalWhereCondition {
 
 export class Where extends QueryPart {
   private conditions: WhereCondition[] = [];
-  private transformer: FieldTransformer;
+  private transformer: FieldTransformer | null;
   private combinedOnly = false;
 
-  constructor(transformer: FieldTransformer, condition?: WhereCondition) {
+  constructor(
+    transformer: FieldTransformer | null,
+    condition?: WhereCondition,
+  ) {
     super();
     this.transformer = transformer;
 
@@ -96,7 +99,7 @@ export class Where extends QueryPart {
 
   private mapFields() {
     this.conditions = this.conditions.map((cond) => {
-      const dbField = this.transformer.toDbField(cond.field);
+      const dbField = this.transformer?.toDbField(cond.field) || cond.field;
       return { ...cond, field: dbField };
     });
   }
