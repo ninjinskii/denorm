@@ -1,10 +1,11 @@
 import { assertEquals } from "https://deno.land/std@0.141.0/testing/asserts.ts";
 import { FieldTransformer, QueryBuilder } from "../src/query/query-builder.ts";
-import { camelCase, snakeCase } from "../src/util/case.ts";
+import { snakeCase } from "../src/util/case.ts";
 
 const transformer: FieldTransformer = {
   toDbField: (clientField) => snakeCase(clientField),
-  fromDbField: (dbField) => camelCase(dbField),
+  fromDbField: (dbField) => dbField,
+  usePostgresNativeCamel: true,
 };
 
 const builder = new QueryBuilder(
@@ -25,7 +26,7 @@ Deno.test("Insert single values, first result only", async () => {
       .from("test")
       .executeAndGetFirst();
 
-    assertEquals(actual, { wine_id: 1, comment: "Hi mom!" });
+    assertEquals(actual, { wineId: 1, comment: "Hi mom!" });
   });
 });
 
@@ -44,9 +45,28 @@ Deno.test("Insert multiple values", async () => {
       .execute();
 
     assertEquals(actual, [
-      { wine_id: 1, comment: "Hi mom!" },
-      { wine_id: 2, comment: `A 'weird" one '' héhé` },
+      { wineId: 1, comment: "Hi mom!" },
+      { wineId: 2, comment: `A 'weird" one '' héhé` },
     ]);
+  });
+});
+
+Deno.test("Where single condition", async () => {
+  await withDatabase(async () => {
+    await builder
+      .insert("test", [
+        { wine_id: 1, comment: "Hi mom!" },
+        { wine_id: 2, comment: `A 'weird" one '' héhé` },
+      ])
+      .execute();
+
+    const actual = await builder
+      .select("wine_id")
+      .from("test")
+      .where({ field: "comment", equals: "Hi mom!" })
+      .execute()
+
+    assertEquals(actual, [{ wineId: 2 }]);
   });
 });
 
