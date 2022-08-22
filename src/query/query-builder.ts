@@ -1,8 +1,7 @@
-import { DeferredAccessStack } from "https://deno.land/x/postgres@v0.16.1/utils/deferred.ts";
 import { From } from "./from.ts";
 import { Insert } from "./insert.ts";
 import { QueryExecutor } from "./query-executor.ts";
-import { PreparedQuery, QueryPart } from "./query-part.ts";
+import { PreparedQuery } from "./query-part.ts";
 import { Select } from "./select.ts";
 import { InternalWhereCondition, Where, WhereCondition } from "./where.ts";
 
@@ -29,8 +28,8 @@ export class QueryBuilder {
   private _insert: Insert | null = null;
   private whereIsCalled = false;
 
-  constructor(transformer: FieldTransformer, databaseUrl: string) {
-    this.transformer = transformer;
+  constructor(transformer: FieldTransformer | null, databaseUrl: string) {
+    this.transformer = transformer || defaultTransformer;
     this.executor = new QueryExecutor(databaseUrl);
   }
 
@@ -135,7 +134,7 @@ export class QueryBuilder {
 
     if (this._insert) {
       const insert = this._insert.toPreparedQuery();
-      insert.text += ";"
+      insert.text += ";";
       this.reset();
       return insert;
     }
