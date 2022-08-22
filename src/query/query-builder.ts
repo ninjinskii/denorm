@@ -11,15 +11,10 @@ export interface FieldTransformer {
   usePostgresNativeCamel?: boolean;
 }
 
-const defaultTransformer = {
-  toDbField: (clientName: string) => clientName,
-  fromDbField: (fieldName: string) => fieldName,
-};
-
 type Agregator = "AND" | "OR";
 
 export class QueryBuilder {
-  private transformer: FieldTransformer;
+  private transformer: FieldTransformer | null;
   private executor: QueryExecutor;
   private _select: Select | null = null;
   private _from: From | null = null;
@@ -30,7 +25,7 @@ export class QueryBuilder {
   private whereIsCalled = false;
 
   constructor(transformer: FieldTransformer | null, databaseUrl: string) {
-    this.transformer = transformer || defaultTransformer;
+    this.transformer = transformer;
     this.executor = new QueryExecutor(databaseUrl, this.transformer);
   }
 

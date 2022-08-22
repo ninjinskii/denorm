@@ -7,14 +7,14 @@ export class QueryExecutor {
   private client: Client | null = null;
   private transaction: Transaction | null = null;
   private databaseUrl: string;
-  private transformer: FieldTransformer;
+  private transformer: FieldTransformer | null;
   private useNativeCamel = false;
 
-  constructor(databaseUrl: string, transformer: FieldTransformer) {
+  constructor(databaseUrl: string, transformer: FieldTransformer | null) {
     this.databaseUrl = databaseUrl;
     this.transformer = transformer;
 
-    if (this.transformer.usePostgresNativeCamel) {
+    if (this.transformer?.usePostgresNativeCamel) {
       this.useNativeCamel = true;
     }
   }
@@ -43,10 +43,14 @@ export class QueryExecutor {
 
     return (this.useNativeCamel
       ? result
-      : this.renameKeys(result)) as unknown as T[];
+      : this.maybeRenameKeys(result)) as unknown as T[];
   }
 
-  private renameKeys<T>(queryResult: QueryObjectResult<T>): T[] {
+  private maybeRenameKeys<T>(queryResult: QueryObjectResult<T>): T[] {
+    if (!this.transformer) {
+      return queryResult as unknown as T[];
+    }
+
     const objects = [];
 
     for (const object of queryResult.rows) {
