@@ -1,4 +1,6 @@
+import { QueryObjectResult } from "https://deno.land/x/postgres@v0.16.1/query/query.ts";
 import { Client, Transaction } from "../../deps.ts";
+import { PreparedQuery } from "./query-part.ts";
 
 export class QueryExecutor {
   private client: Client | null = null;
@@ -20,12 +22,20 @@ export class QueryExecutor {
     return this.client !== null;
   }
 
-  async submitQuery<T>(query: string): Promise<T[]> {
-    await this.healthCheck()
-  }
-  
-  async submitPreparedQuery(query: string, values: any[]) {
-    await this.healthCheck()
+  async submitQuery<T>(query: PreparedQuery): Promise<T[]> {
+    await this.healthCheck();
+    const client = this.client as Client
+
+    if (query.args) {
+      const result = await client.queryObject<QueryObjectResult<T>>({
+        text: query.text,
+        args: query.args,
+      });
+      return result.rows as unknown as T[];
+    } else {
+      const result = await client.queryObject<QueryObjectResult<T>>(query.text);
+      return result.rows as unknown as T[];
+    }
   }
 
   private async healthCheck() {

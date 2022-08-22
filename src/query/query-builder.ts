@@ -1,5 +1,7 @@
 import { From } from "./from.ts";
 import { Insert } from "./insert.ts";
+import { QueryExecutor } from "./query-executor.ts";
+import { PreparedQuery, QueryPart } from "./query-part.ts";
 import { Select } from "./select.ts";
 import { InternalWhereCondition, Where, WhereCondition } from "./where.ts";
 
@@ -17,6 +19,7 @@ type Agregator = "AND" | "OR";
 
 export class QueryBuilder {
   private transformer: FieldTransformer;
+  private executor: QueryExecutor;
   private _select: Select | null = null;
   private _from: From | null = null;
   private _where: Where | null = null;
@@ -25,8 +28,9 @@ export class QueryBuilder {
   private _insert: Insert | null = null;
   private whereIsCalled = false;
 
-  constructor(transformer: FieldTransformer) {
+  constructor(transformer: FieldTransformer, databaseUrl: string) {
     this.transformer = transformer;
+    this.executor = new QueryExecutor(databaseUrl);
   }
 
   select(...fields: string[]): QueryBuilderAfterSelect {
@@ -120,28 +124,62 @@ export class QueryBuilder {
 
   // Let the developer decide, defaulting to any in case no type is needed
   // deno-lint-ignore no-explicit-any
-  execute<T = any>(): T[] {
-    const fullQuery = this.toText();
-
-    // Excute query with postgres driver
-    return [];
-  }
-
-  toText() {
+  execute<T = any>(): Promise<T[]> {
     this.healthCheck();
 
-    if (this._whereConditions.length) {
-      this.prepareWhere();
+    if (this._insert) {
+      const fullQuery = this._insert.toText();
+      this.reset();
+      return this.executor.submitQuery(fullQuery);
+    }
+
+    const fullQuery = [this._select, this._from, this._where]
+      .filter((part) => part !== undefined)
+      .map((part) => part?.toText())
+      .reduce((acc: PreparedQuery, part) => {
+        acc.text += part?.text;
+        acc.args = part?.args;
+        return acc;
+      }, { text: "", args: { fields: [], values: [] } });
+
+    this.reset();
+    return this.executor.submitQuery(fullQuery);
+  }
+
+  toText(): string {
+    this.healthCheck();
+
+    if (this._insert) {
+      this.reset();
+      return this._insert.toText().text;
     }
 
     const parts = [this._select, this._from, this._where];
-    const fullQuery = parts.map((part) => part?.toText()).join(" ").trim() +
-      ";";
+    const fullQuery =
+      parts.map((part) => part?.toText().text).join(" ").trim() + ";";
     this.reset();
     return fullQuery;
   }
 
+  private reset() {
+    this._select = null;
+    this._from = null;
+    this._where = null;
+    this._whereConditions = [];
+    this._agregators = [];
+    this._insert = null;
+    this.whereIsCalled = false;
+  }
+
   private healthCheck() {
+    if (this._whereConditions.length) {
+      this.prepareWhere();
+    }
+
+    if (!this._select && !this._insert) {
+      throw new Error("Empty query");
+    }
+
     if (this._select && !this._from) {
       throw new Error("select() called but not from()");
     }
@@ -153,15 +191,6 @@ export class QueryBuilder {
     }
   }
 
-  private reset() {
-    this._select = null;
-    this._from = null;
-    this._where = null;
-    this._whereConditions = [];
-    this._agregators = [];
-    this.whereIsCalled = false;
-  }
-
   private throwIfNotWhere() {
     if (!this.whereIsCalled) {
       throw new Error(
@@ -171,7 +200,7 @@ export class QueryBuilder {
   }
 }
 
-// A bunch of interface to guide developers while making queries
+// A bunch of interfaces to guide developers while making queries
 interface QueryBuilderAfterSelect {
   from: (...tables: string[]) => QueryBuilderAfterFrom;
 }
@@ -179,17 +208,17 @@ interface QueryBuilderAfterSelect {
 interface QueryBuilderAfterFrom {
   where: (condition: WhereCondition) => QueryBuilderAfterWhere;
   toText: () => string;
-  execute: <T>() => T[];
+  execute: <T>() => Promise<T[]>;
 }
 
 interface QueryBuilderAfterWhere {
   and: (condition: WhereCondition | WhereCondition[]) => QueryBuilderAfterWhere;
   or: (condition: WhereCondition | WhereCondition[]) => QueryBuilderAfterWhere;
   toText: () => string;
-  execute: <T>() => T[];
+  execute: <T>() => Promise<T[]>;
 }
 
 interface QueryBuilderAfterInsert {
   toText: () => string;
-  execute: <T>() => T[];
+  execute: <T>() => Promise<T[]>;
 }
