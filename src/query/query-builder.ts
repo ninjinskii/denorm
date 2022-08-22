@@ -118,7 +118,16 @@ export class QueryBuilder {
     this._where = where;
   }
 
-  execute(): string {
+  // Let the developer decide, defaulting to any in case no type is needed
+  // deno-lint-ignore no-explicit-any
+  execute<T = any>(): T[] {
+    const fullQuery = this.toText();
+
+    // Excute query with postgres driver
+    return [];
+  }
+
+  toText() {
     this.healthCheck();
 
     if (this._whereConditions.length) {
@@ -168,16 +177,19 @@ interface QueryBuilderAfterSelect {
 }
 
 interface QueryBuilderAfterFrom {
-  where: (condition: WhereCondition) => QueryBuilderAfterWhere,
-  execute: () => string;
+  where: (condition: WhereCondition) => QueryBuilderAfterWhere;
+  toText: () => string;
+  execute: <T>() => T[];
 }
 
 interface QueryBuilderAfterWhere {
   and: (condition: WhereCondition | WhereCondition[]) => QueryBuilderAfterWhere;
   or: (condition: WhereCondition | WhereCondition[]) => QueryBuilderAfterWhere;
-  execute: () => string;
+  toText: () => string;
+  execute: <T>() => T[];
 }
 
 interface QueryBuilderAfterInsert {
-  execute: () => string;
+  toText: () => string;
+  execute: <T>() => T[];
 }

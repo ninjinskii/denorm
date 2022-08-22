@@ -77,6 +77,7 @@ export class Insert extends QueryPart {
     return { values, preparedValues };
   }
 
+  // TODO: this might not be necessary
   private escapeSingleQuotes(value: any): any {
     return typeof value === "string" ? value.replaceAll("'", "''") : value;
   }
