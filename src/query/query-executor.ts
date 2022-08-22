@@ -35,23 +35,15 @@ export class QueryExecutor {
     const client = this.client as Client;
     const { text, args } = query;
 
-    if (args) {
-      const result = await client.queryObject<QueryObjectResult<T>>({
-        text,
-        args,
-        camelcase: this.useNativeCamel,
-      });
+    const result = await client.queryObject<QueryObjectResult<T>>({
+      text,
+      args,
+      camelcase: this.useNativeCamel,
+    });
 
-      return (this.useNativeCamel
-        ? result
-        : this.renameKeys(result)) as unknown as T[];
-    } else {
-      const result = await client.queryObject<QueryObjectResult<T>>({
-        text,
-        camelcase: this.useNativeCamel,
-      });
-      return this.renameKeys(result) as unknown as T[];
-    }
+    return (this.useNativeCamel
+      ? result
+      : this.renameKeys(result)) as unknown as T[];
   }
 
   private renameKeys<T>(queryResult: QueryObjectResult<T>): T[] {
