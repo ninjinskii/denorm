@@ -24,16 +24,17 @@ export class QueryExecutor {
 
   async submitQuery<T>(query: PreparedQuery): Promise<T[]> {
     await this.healthCheck();
-    const client = this.client as Client
+    const client = this.client as Client;
+    const { text, args } = query;
 
-    if (query.args) {
+    if (args) {
       const result = await client.queryObject<QueryObjectResult<T>>({
-        text: query.text,
-        args: query.args,
+        text,
+        args,
       });
       return result.rows as unknown as T[];
     } else {
-      const result = await client.queryObject<QueryObjectResult<T>>(query.text);
+      const result = await client.queryObject<QueryObjectResult<T>>(text);
       return result.rows as unknown as T[];
     }
   }

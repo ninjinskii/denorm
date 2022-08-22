@@ -11,7 +11,7 @@ export class Select extends QueryPart {
     this.transformer = transformer;
   }
 
-  toText(): PreparedQuery {
+  toPreparedQuery(): PreparedQuery {
     const formattedProjection = this.mapFields().join(",");
     return { text: `SELECT ${formattedProjection}` };
   }

@@ -1,3 +1,4 @@
+import { DeferredAccessStack } from "https://deno.land/x/postgres@v0.16.1/utils/deferred.ts";
 import { From } from "./from.ts";
 import { Insert } from "./insert.ts";
 import { QueryExecutor } from "./query-executor.ts";
@@ -125,40 +126,29 @@ export class QueryBuilder {
   // Let the developer decide, defaulting to any in case no type is needed
   // deno-lint-ignore no-explicit-any
   execute<T = any>(): Promise<T[]> {
-    this.healthCheck();
-
-    if (this._insert) {
-      const fullQuery = this._insert.toText();
-      this.reset();
-      return this.executor.submitQuery(fullQuery);
-    }
-
-    const fullQuery = [this._select, this._from, this._where]
-      .filter((part) => part !== undefined)
-      .map((part) => part?.toText())
-      .reduce((acc: PreparedQuery, part) => {
-        acc.text += part?.text;
-        acc.args = part?.args;
-        return acc;
-      }, { text: "", args: { fields: [], values: [] } });
-
-    this.reset();
-    return this.executor.submitQuery(fullQuery);
+    const preparedQuery = this.getPreparedQuery();
+    return this.executor.submitQuery(preparedQuery);
   }
 
-  toText(): string {
+  getPreparedQuery(): PreparedQuery {
     this.healthCheck();
 
     if (this._insert) {
+      const insert = this._insert.toPreparedQuery();
+      insert.text += ";"
       this.reset();
-      return this._insert.toText().text;
+      return insert;
     }
 
-    const parts = [this._select, this._from, this._where];
-    const fullQuery =
-      parts.map((part) => part?.toText().text).join(" ").trim() + ";";
+    const select = this._select?.toPreparedQuery();
+    const from = this._from?.toPreparedQuery();
+    const where = this._where?.toPreparedQuery();
+    const args = this._where?.toPreparedQuery().args;
+    const all = [select, from, where];
+
+    const text = all.map((part) => part?.text).join(" ").trim() + ";";
     this.reset();
-    return fullQuery;
+    return { text, args };
   }
 
   private reset() {
@@ -207,18 +197,18 @@ interface QueryBuilderAfterSelect {
 
 interface QueryBuilderAfterFrom {
   where: (condition: WhereCondition) => QueryBuilderAfterWhere;
-  toText: () => string;
+  getPreparedQuery: () => PreparedQuery;
   execute: <T>() => Promise<T[]>;
 }
 
 interface QueryBuilderAfterWhere {
   and: (condition: WhereCondition | WhereCondition[]) => QueryBuilderAfterWhere;
   or: (condition: WhereCondition | WhereCondition[]) => QueryBuilderAfterWhere;
-  toText: () => string;
+  getPreparedQuery: () => PreparedQuery;
   execute: <T>() => Promise<T[]>;
 }
 
 interface QueryBuilderAfterInsert {
-  toText: () => string;
+  getPreparedQuery: () => PreparedQuery;
   execute: <T>() => Promise<T[]>;
 }

@@ -8,7 +8,7 @@ export class From extends QueryPart {
     this.tables = tables;
   }
 
-  toText(): PreparedQuery {
+  toPreparedQuery(): PreparedQuery {
     const formattedTables = this.tables.join(",");
     return { text: `FROM ${formattedTables}` };
   }
