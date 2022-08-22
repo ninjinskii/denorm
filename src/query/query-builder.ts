@@ -8,26 +8,6 @@ export interface FieldTransformer {
   fromDbField: (fieldName: string) => string;
 }
 
-// A bunch of interface to avoid developers to make weird queries
-interface QueryBuilderAfterSelect {
-  from: (...tables: string[]) => QueryBuilderAfterFrom;
-}
-
-interface QueryBuilderAfterFrom {
-  where: (condition: WhereCondition) => QueryBuilderAfterWhere,
-  execute: () => string;
-}
-
-interface QueryBuilderAfterWhere {
-  and: (condition: WhereCondition | WhereCondition[]) => QueryBuilderAfterWhere;
-  or: (condition: WhereCondition | WhereCondition[]) => QueryBuilderAfterWhere;
-  execute: () => string;
-}
-
-interface QueryBuilderAfterInsert {
-  execute: () => string;
-}
-
 const defaultTransformer = {
   toDbField: (clientName: string) => clientName,
   fromDbField: (fieldName: string) => fieldName,
@@ -180,4 +160,24 @@ export class QueryBuilder {
       );
     }
   }
+}
+
+// A bunch of interface to guide developers while making queries
+interface QueryBuilderAfterSelect {
+  from: (...tables: string[]) => QueryBuilderAfterFrom;
+}
+
+interface QueryBuilderAfterFrom {
+  where: (condition: WhereCondition) => QueryBuilderAfterWhere,
+  execute: () => string;
+}
+
+interface QueryBuilderAfterWhere {
+  and: (condition: WhereCondition | WhereCondition[]) => QueryBuilderAfterWhere;
+  or: (condition: WhereCondition | WhereCondition[]) => QueryBuilderAfterWhere;
+  execute: () => string;
+}
+
+interface QueryBuilderAfterInsert {
+  execute: () => string;
 }
