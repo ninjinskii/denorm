@@ -1,12 +1,10 @@
-import { assertEquals, Client } from "../deps.ts";
+import { assertEquals } from "../deps.ts";
 import { From } from "../src/query/from.ts";
 import { Insert } from "../src/query/insert.ts";
 import { FieldTransformer, QueryBuilder } from "../src/query/query-builder.ts";
 import { Select } from "../src/query/select.ts";
 import { Where } from "../src/query/where.ts";
 import { camelCase, snakeCase } from "../src/util/case.ts";
-
-const client = new Client(Deno.env.get("DATABASE_URL"));
 
 const transformer: FieldTransformer = {
   toDbField: (clientField) => snakeCase(clientField),
@@ -169,62 +167,3 @@ Deno.test("Select + From + Where, multiple values", () => {
     "SELECT wine_id,comment FROM wine,bottle WHERE wine_id = 1 AND comment = 'Hi mom!';",
   );
 });
-
-// Sending our queries to database
-Deno.test("Prepared args in DB", async () => {
-  await withDatabase(async () => {
-    await client.queryObject({
-      text: "INSERT INTO test VALUES ($1, $2), ($3, $4);",
-      args: [1, "Hi mom!", 2, `A 'weird" one '' héhé`],
-    });
-
-    const result = await client.queryObject({
-      text:
-        "SELECT wine_id, comment FROM test WHERE wine_id = $1 OR wine_id = $2;",
-      args: [1, 2],
-    });
-
-    const expected = [
-      { wine_id: 1, comment: "Hi mom!" },
-      { wine_id: 2, comment: `A 'weird" one '' héhé` },
-    ];
-
-    assertEquals(expected, result.rows);
-  });
-});
-
-Deno.test("Normal usage", async () => {
-  await withDatabase(async () => {
-    await builder
-      .insert("test", [
-        { wine_id: 1, comment: "Hi mom!" },
-        { wine_id: 2, comment: `A 'weird" one '' héhé` },
-      ])
-      .execute();
-
-    const result = await builder
-      .select("*")
-      .from("test")
-      .execute();
-
-    console.log(result);
-  });
-});
-
-async function withDatabase(block: () => Promise<void>) {
-  // Some test uses the client located in this file
-  await client.connect();
-  await client.queryObject(
-    `CREATE TEMP TABLE IF NOT EXISTS test (wine_id INTEGER, comment VARCHAR(255));`,
-  );
-
-  // Take care of QueryBuilder own client
-  await builder["executor"]["init"]();
-  await builder["executor"]["client"]?.queryObject(
-    "CREATE TEMP TABLE IF NOT EXISTS test (wine_id INTEGER, comment VARCHAR(255));",
-  );
-
-  await block();
-  await builder["executor"]["client"]?.end();
-  await client.end();
-}
