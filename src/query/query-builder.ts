@@ -8,6 +8,7 @@ import { InternalWhereCondition, Where, WhereCondition } from "./where.ts";
 export interface FieldTransformer {
   toDbField: (clientName: string) => string;
   fromDbField: (fieldName: string) => string;
+  usePostgresNativeCamel?: boolean;
 }
 
 const defaultTransformer = {
@@ -30,7 +31,7 @@ export class QueryBuilder {
 
   constructor(transformer: FieldTransformer | null, databaseUrl: string) {
     this.transformer = transformer || defaultTransformer;
-    this.executor = new QueryExecutor(databaseUrl);
+    this.executor = new QueryExecutor(databaseUrl, this.transformer);
   }
 
   select(...fields: string[]): QueryBuilderAfterSelect {

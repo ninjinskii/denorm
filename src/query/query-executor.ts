@@ -1,14 +1,22 @@
 import { QueryObjectResult } from "https://deno.land/x/postgres@v0.16.1/query/query.ts";
 import { Client, Transaction } from "../../deps.ts";
+import { FieldTransformer } from "./query-builder.ts";
 import { PreparedQuery } from "./query-part.ts";
 
 export class QueryExecutor {
   private client: Client | null = null;
   private transaction: Transaction | null = null;
   private databaseUrl: string;
+  private transformer: FieldTransformer;
+  private useNativeCamel = false;
 
-  constructor(databaseUrl: string) {
+  constructor(databaseUrl: string, transformer: FieldTransformer) {
     this.databaseUrl = databaseUrl;
+    this.transformer = transformer;
+
+    if (this.transformer.usePostgresNativeCamel) {
+      this.useNativeCamel = true;
+    }
   }
 
   private async init() {
@@ -31,12 +39,36 @@ export class QueryExecutor {
       const result = await client.queryObject<QueryObjectResult<T>>({
         text,
         args,
+        camelcase: this.useNativeCamel,
       });
-      return result.rows as unknown as T[];
+
+      return (this.useNativeCamel
+        ? result
+        : this.renameKeys(result)) as unknown as T[];
     } else {
-      const result = await client.queryObject<QueryObjectResult<T>>(text);
-      return result.rows as unknown as T[];
+      const result = await client.queryObject<QueryObjectResult<T>>({
+        text,
+        camelcase: this.useNativeCamel,
+      });
+      return this.renameKeys(result) as unknown as T[];
     }
+  }
+
+  private renameKeys<T>(queryResult: QueryObjectResult<T>): T[] {
+    const objects = [];
+
+    for (const object of queryResult.rows) {
+      const o = object as never;
+
+      for (const key of Object.keys(o)) {
+        const renamedKey = this.transformer.fromDbField(key);
+        delete Object.assign(o, { [renamedKey]: o[key] })[key];
+      }
+
+      objects.push(object);
+    }
+
+    return objects;
   }
 
   private async healthCheck() {
