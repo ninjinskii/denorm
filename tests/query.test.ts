@@ -139,7 +139,7 @@ Deno.test("Select + From, single values", () => {
   const query = builder
     .select("*")
     .from("wine")
-    .execute();
+    .toText();
 
   assertEquals(query, "SELECT * FROM wine;");
 });
@@ -148,7 +148,7 @@ Deno.test("Select + From, multiple values", () => {
   const query = builder
     .select("wineId", "comment")
     .from("wine", "bottle")
-    .execute();
+    .toText();
 
   assertEquals(query, "SELECT wine_id,comment FROM wine,bottle;");
 });
@@ -159,7 +159,7 @@ Deno.test("Select + From + Where, multiple values", () => {
     .from("wine", "bottle")
     .where({ field: "wineId", equals: 1 })
     .and({ field: "comment", equals: "Hi mom!" })
-    .execute();
+    .toText();
 
   assertEquals(
     query,
@@ -195,5 +195,5 @@ Deno.test("Prepared args in DB", async () => {
 });
 
 Deno.test("Normal usage", async () => {
-  
+
 })
