@@ -1,10 +1,31 @@
 import { From } from "./from.ts";
+import { Insert } from "./insert.ts";
 import { Select } from "./select.ts";
 import { InternalWhereCondition, Where, WhereCondition } from "./where.ts";
 
 export interface FieldTransformer {
   toDbField: (clientName: string) => string;
   fromDbField: (fieldName: string) => string;
+}
+
+// A bunch of interface to avoid developers to make weird queries
+interface QueryBuilderAfterSelect {
+  from: (...tables: string[]) => QueryBuilderAfterFrom;
+}
+
+interface QueryBuilderAfterFrom {
+  where: (condition: WhereCondition) => QueryBuilderAfterWhere,
+  execute: () => string;
+}
+
+interface QueryBuilderAfterWhere {
+  and: (condition: WhereCondition | WhereCondition[]) => QueryBuilderAfterWhere;
+  or: (condition: WhereCondition | WhereCondition[]) => QueryBuilderAfterWhere;
+  execute: () => string;
+}
+
+interface QueryBuilderAfterInsert {
+  execute: () => string;
 }
 
 const defaultTransformer = {
@@ -21,39 +42,47 @@ export class QueryBuilder {
   private _where: Where | null = null;
   private _whereConditions: Array<WhereCondition | WhereCondition[]> = [];
   private _agregators: Agregator[] = [];
+  private _insert: Insert | null = null;
   private whereIsCalled = false;
 
   constructor(transformer: FieldTransformer) {
     this.transformer = transformer;
   }
 
-  select(...fields: string[]): QueryBuilder {
+  select(...fields: string[]): QueryBuilderAfterSelect {
     this._select = new Select(this.transformer, ...fields);
     return this;
   }
 
-  from(...tables: string[]): QueryBuilder {
+  from(...tables: string[]): QueryBuilderAfterFrom {
     this._from = new From(...tables);
     return this;
   }
 
-  where(condition: WhereCondition): QueryBuilder {
+  where(condition: WhereCondition): QueryBuilderAfterWhere {
     this.whereIsCalled = true;
     this._whereConditions.push(condition);
     return this;
   }
 
-  and(condition: WhereCondition | WhereCondition[]) {
+  and(condition: WhereCondition | WhereCondition[]): QueryBuilderAfterWhere {
     this.throwIfNotWhere();
     this._agregators.push("AND");
     this._whereConditions.push(condition);
     return this;
   }
 
-  or(condition: WhereCondition | WhereCondition[]) {
+  or(condition: WhereCondition | WhereCondition[]): QueryBuilderAfterWhere {
     this.throwIfNotWhere();
     this._agregators.push("OR");
     this._whereConditions.push(condition);
+    return this;
+  }
+
+  // We can't guess the type
+  // deno-lint-ignore no-explicit-any
+  insert(tableName: string, objects: any): QueryBuilderAfterInsert {
+    this._insert = new Insert(this.transformer, tableName, objects);
     return this;
   }
 
@@ -126,6 +155,12 @@ export class QueryBuilder {
   private healthCheck() {
     if (this._select && !this._from) {
       throw new Error("select() called but not from()");
+    }
+
+    if (this._insert && (this._select || this._from || this._where)) {
+      throw new Error(
+        "Cannot use insert and another builder method in the same query",
+      );
     }
   }
 
