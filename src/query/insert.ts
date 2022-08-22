@@ -60,9 +60,8 @@ export class Insert extends QueryPart {
       const objectPreparedValuesArray = [];
 
       for (const value of Object.values(object)) {
-        const val = this.escapeSingleQuotes(value);
         objectPreparedValuesArray.push(`$${preparedArgsCounter++}`);
-        values.push(val);
+        values.push(value);
       }
 
       preparedValuesArray.push(`(${objectPreparedValuesArray.join(", ")})`);
@@ -70,10 +69,5 @@ export class Insert extends QueryPart {
 
     const preparedValues = preparedValuesArray.join(", ");
     return { values, preparedValues };
-  }
-
-  // TODO: this might not be necessary
-  private escapeSingleQuotes(value: any): any {
-    return typeof value === "string" ? value.replaceAll("'", "''") : value;
   }
 }
