@@ -1,4 +1,4 @@
-import { QueryPart } from "./query-part.ts";
+import { PreparedQuery, QueryPart } from "./query-part.ts";
 
 export class From extends QueryPart {
   private readonly tables: string[];
@@ -8,8 +8,8 @@ export class From extends QueryPart {
     this.tables = tables;
   }
 
-  toText(): string {
+  toText(): PreparedQuery {
     const formattedTables = this.tables.join(",");
-    return `FROM ${formattedTables}`;
+    return { text: `FROM ${formattedTables}` };
   }
 }

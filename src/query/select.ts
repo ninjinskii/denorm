@@ -1,5 +1,5 @@
 import { FieldTransformer } from "./query-builder.ts";
-import { QueryPart } from "./query-part.ts";
+import { PreparedQuery, QueryPart } from "./query-part.ts";
 
 export class Select extends QueryPart {
   private readonly projection: string[];
@@ -11,9 +11,9 @@ export class Select extends QueryPart {
     this.transformer = transformer;
   }
 
-  toText(): string {
+  toText(): PreparedQuery {
     const formattedProjection = this.mapFields().join(",");
-    return `SELECT ${formattedProjection}`;
+    return { text: `SELECT ${formattedProjection}` };
   }
 
   private mapFields(): string[] {

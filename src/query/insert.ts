@@ -1,7 +1,7 @@
 // We will work a lot with any since we're trying to be as generic as possible to insert anything in the db.
 // deno-lint-ignore-file no-explicit-any
 import { FieldTransformer } from "./query-builder.ts";
-import { QueryPart } from "./query-part.ts";
+import { PreparedQuery, QueryPart } from "./query-part.ts";
 
 interface InsertFields {
   fields: string[];
@@ -34,11 +34,14 @@ export class Insert extends QueryPart {
     }
   }
 
-  toText(): string {
+  toText(): PreparedQuery {
     const { fields, preparedFields } = this.extractFields();
     const { values, preparedValues } = this.extractValues();
+    const text =
+      `INSERT INTO ${this.tableName} ${preparedFields} VALUES ${preparedValues}`;
+    const args = { fields, values };
 
-    return `INSERT INTO ${this.tableName} ${preparedFields} VALUES ${preparedValues}`;
+    return { text, args };
   }
 
   private extractFields(): InsertFields {
