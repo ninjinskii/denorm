@@ -36,7 +36,7 @@ export class Where extends QueryPart {
     }
   }
 
-  toText(): PreparedQuery {
+  toPreparedQuery(): PreparedQuery {
     this.mapFields();
 
     let text = "WHERE ";

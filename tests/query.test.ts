@@ -19,40 +19,40 @@ const builder = new QueryBuilder(
 );
 
 Deno.test("Select all", () => {
-  const select = new Select(transformer, "*").toText().text;
+  const select = new Select(transformer, "*").toPreparedQuery().text;
   assertEquals(select, "SELECT *");
 });
 
 Deno.test("Select single field", () => {
-  const select = new Select(transformer, "wineId").toText().text;
+  const select = new Select(transformer, "wineId").toPreparedQuery().text;
   assertEquals(select, "SELECT wine_id");
 });
 
 Deno.test("Select multiple fields", () => {
   const select = new Select(transformer, "wineId", "comment", "tastingId")
-    .toText().text;
+    .toPreparedQuery().text;
   assertEquals(select, "SELECT wine_id,comment,tasting_id");
 });
 
 Deno.test("From single table", () => {
-  const from = new From("wine").toText().text;
+  const from = new From("wine").toPreparedQuery().text;
   assertEquals(from, "FROM wine");
 });
 
 Deno.test("From multiple tables", () => {
-  const from = new From("wine", "bottle").toText().text;
+  const from = new From("wine", "bottle").toPreparedQuery().text;
   assertEquals(from, "FROM wine,bottle");
 });
 
 Deno.test("Where single equals int", () => {
   const conditions = { field: "wineId", equals: 1 };
-  const where = new Where(transformer, conditions).toText().text;
+  const where = new Where(transformer, conditions).toPreparedQuery().text;
   assertEquals(where, "WHERE wine_id = 1");
 });
 
 Deno.test("Where single equals string", () => {
   const conditions = { field: "comment", equals: "Hi mom!" };
-  const where = new Where(transformer, conditions).toText().text;
+  const where = new Where(transformer, conditions).toPreparedQuery().text;
   assertEquals(where, "WHERE comment = 'Hi mom!'");
 });
 
@@ -70,7 +70,7 @@ Deno.test("Where two equals AND", () => {
   const conditions = new Where(transformer, { field: "wineId", equals: 1 })
     .and({ field: "comment", equals: "Hi mom!" });
 
-  const where = conditions.toText().text;
+  const where = conditions.toPreparedQuery().text;
   assertEquals(where, "WHERE wine_id = 1 AND comment = 'Hi mom!'");
 });
 
@@ -79,7 +79,7 @@ Deno.test("Where multiple equals AND", () => {
     .and({ field: "comment", equals: "Hi mom!" })
     .and({ field: "type", equals: 1 });
 
-  const where = conditions.toText().text;
+  const where = conditions.toPreparedQuery().text;
   assertEquals(where, "WHERE wine_id = 1 AND comment = 'Hi mom!' AND type = 1");
 });
 
@@ -88,7 +88,7 @@ Deno.test("Where multiple equals AND & OR", () => {
     .and({ field: "comment", equals: "Hi mom!" })
     .or({ field: "type", equals: 1 });
 
-  const where = conditions.toText().text;
+  const where = conditions.toPreparedQuery().text;
   assertEquals(where, "WHERE wine_id = 1 AND comment = 'Hi mom!' OR type = 1");
 });
 
@@ -100,7 +100,7 @@ Deno.test("Where combined multiple equals AND", () => {
     }])
     .or({ field: "type", equals: 1 });
 
-  const where = conditions.toText().text;
+  const where = conditions.toPreparedQuery().text;
   assertEquals(
     where,
     "WHERE wine_id = 1 AND (comment = 'Hi mom!' AND type = 2) OR type = 1",
@@ -118,7 +118,7 @@ Deno.test("Where combined only multiple equals AND & OR", () => {
       { field: "type", equals: 3 },
     ]);
 
-  const where = conditions.toText().text;
+  const where = conditions.toPreparedQuery().text;
   assertEquals(
     where,
     "WHERE (comment = 'Hi mom!' AND type = 2) OR (type = 1 OR type = 3)",
@@ -132,8 +132,8 @@ Deno.test("Insert into", () => {
   ]);
 
   assertEquals(
-    insert.toText().text,
-    "INSERT INTO wine ($1, $2, $3) VALUES ($4, $5, $6), ($7, $8, $9)",
+    insert.toPreparedQuery().text,
+    "INSERT INTO wine (wine_id, comment, tasting_taste_comment) VALUES ($1, $2, $3), ($4, $5, $6)",
   );
 });
 
@@ -142,7 +142,7 @@ Deno.test("Select + From, single values", () => {
   const query = builder
     .select("*")
     .from("wine")
-    .toText();
+    .getPreparedQuery().text;
 
   assertEquals(query, "SELECT * FROM wine;");
 });
@@ -151,7 +151,7 @@ Deno.test("Select + From, multiple values", () => {
   const query = builder
     .select("wineId", "comment")
     .from("wine", "bottle")
-    .toText();
+    .getPreparedQuery().text;
 
   assertEquals(query, "SELECT wine_id,comment FROM wine,bottle;");
 });
@@ -162,7 +162,7 @@ Deno.test("Select + From + Where, multiple values", () => {
     .from("wine", "bottle")
     .where({ field: "wineId", equals: 1 })
     .and({ field: "comment", equals: "Hi mom!" })
-    .toText();
+    .getPreparedQuery().text;
 
   assertEquals(
     query,
@@ -172,30 +172,59 @@ Deno.test("Select + From + Where, multiple values", () => {
 
 // Sending our queries to database
 Deno.test("Prepared args in DB", async () => {
+  await withDatabase(async () => {
+    await client.queryObject({
+      text: "INSERT INTO test VALUES ($1, $2), ($3, $4);",
+      args: [1, "Hi mom!", 2, `A 'weird" one '' héhé`],
+    });
+
+    const result = await client.queryObject({
+      text:
+        "SELECT wine_id, comment FROM test WHERE wine_id = $1 OR wine_id = $2;",
+      args: [1, 2],
+    });
+
+    const expected = [
+      { wine_id: 1, comment: "Hi mom!" },
+      { wine_id: 2, comment: `A 'weird" one '' héhé` },
+    ];
+
+    assertEquals(expected, result.rows);
+  });
+});
+
+Deno.test("Normal usage", async () => {
+  await withDatabase(async () => {
+    await builder
+      .insert("test", [
+        { wine_id: 1, comment: "Hi mom!" },
+        { wine_id: 2, comment: `A 'weird" one '' héhé` },
+      ])
+      .execute();
+
+    const result = await builder
+      .select("*")
+      .from("test")
+      .execute();
+
+    console.log(result);
+  });
+});
+
+async function withDatabase(block: () => Promise<void>) {
+  // Some test uses the client located in this file
   await client.connect();
   await client.queryObject(
     `CREATE TEMP TABLE IF NOT EXISTS test (wine_id INTEGER, comment VARCHAR(255));`,
   );
-  await client.queryObject({
-    text: "INSERT INTO test VALUES ($1, $2), ($3, $4);",
-    args: [1, "Hi mom!", 2, `A 'weird" one '' héhé`],
-  });
 
-  const result = await client.queryObject({
-    text:
-      "SELECT wine_id, comment FROM test WHERE wine_id = $1 OR wine_id = $2;",
-    args: [1, 2],
-  });
+  // Take care of QueryBuilder own client
+  await builder["executor"]["init"]();
+  await builder["executor"]["client"]?.queryObject(
+    "CREATE TEMP TABLE IF NOT EXISTS test (wine_id INTEGER, comment VARCHAR(255));",
+  );
 
-  const expected = [
-    { wine_id: 1, comment: "Hi mom!" },
-    { wine_id: 2, comment: `A 'weird" one '' héhé` },
-  ];
-
+  await block();
+  await builder["executor"]["client"]?.end();
   await client.end();
-
-  assertEquals(expected, result.rows);
-});
-
-Deno.test("Normal usage", async () => {
-});
+}

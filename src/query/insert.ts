@@ -3,11 +3,6 @@
 import { FieldTransformer } from "./query-builder.ts";
 import { PreparedQuery, QueryPart } from "./query-part.ts";
 
-interface InsertFields {
-  fields: string[];
-  preparedFields: string;
-}
-
 interface InsertValues {
   values: any[];
   preparedValues: string;
@@ -17,7 +12,6 @@ export class Insert extends QueryPart {
   private transformer: FieldTransformer;
   private tableName: string;
   private objects: any[];
-  private preparedArgsCounter = 1;
 
   constructor(
     transformer: FieldTransformer,
@@ -34,42 +28,40 @@ export class Insert extends QueryPart {
     }
   }
 
-  toText(): PreparedQuery {
-    const { fields, preparedFields } = this.extractFields();
+  toPreparedQuery(): PreparedQuery {
+    const fields = this.extractFields();
     const { values, preparedValues } = this.extractValues();
+    const args = values;
     const text =
-      `INSERT INTO ${this.tableName} ${preparedFields} VALUES ${preparedValues}`;
-    const args = { fields, values };
+      `INSERT INTO ${this.tableName} (${fields}) VALUES ${preparedValues}`;
 
     return { text, args };
   }
 
-  private extractFields(): InsertFields {
+  private extractFields(): string {
     // We'll use the first object to determine fields to update
     const exampleObject = this.objects[0];
     const fields = [];
-    const preparedFieldsArray = [];
 
     for (const key of Object.keys(exampleObject)) {
       const field = this.transformer.toDbField(key);
-      preparedFieldsArray.push(`$${this.preparedArgsCounter++}`);
       fields.push(field);
     }
 
-    const preparedFields = `(${preparedFieldsArray.join(", ")})`;
-    return { fields, preparedFields };
+    return fields.join(", ");
   }
 
   private extractValues(): InsertValues {
     const values: any[] = [];
     const preparedValuesArray = [];
+    let preparedArgsCounter = 1;
 
     for (const object of this.objects) {
       const objectPreparedValuesArray = [];
 
       for (const value of Object.values(object)) {
         const val = this.escapeSingleQuotes(value);
-        objectPreparedValuesArray.push(`$${this.preparedArgsCounter++}`);
+        objectPreparedValuesArray.push(`$${preparedArgsCounter++}`);
         values.push(val);
       }
 
