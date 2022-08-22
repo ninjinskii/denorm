@@ -42,7 +42,7 @@ export class QueryExecutor {
     });
 
     return (this.useNativeCamel
-      ? result
+      ? result.rows
       : this.maybeRenameKeys(result)) as unknown as T[];
   }
 
