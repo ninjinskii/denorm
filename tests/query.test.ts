@@ -44,32 +44,28 @@ Deno.test("From multiple tables", () => {
 
 Deno.test("Where single equals int", () => {
   const conditions = { field: "wineId", equals: 1 };
-  const where = new Where(transformer, conditions).toPreparedQuery().text;
-  assertEquals(where, "WHERE wine_id = 1");
+  const { text, args } = new Where(transformer, conditions).toPreparedQuery();
+
+  assertEquals(text, "WHERE wine_id = $1");
+  assertEquals(args, [1]);
 });
 
 Deno.test("Where single equals string", () => {
   const conditions = { field: "comment", equals: "Hi mom!" };
-  const where = new Where(transformer, conditions).toPreparedQuery().text;
-  assertEquals(where, "WHERE comment = 'Hi mom!'");
-});
+  const { text, args } = new Where(transformer, conditions).toPreparedQuery();
 
-// Figure out how to escape double quotes in Postgres. Do we need to escape them ?
-// Deno.test("Where single special char equals string", () => {
-//   const conditions = {
-//     field: "comment",
-//     equals: `Belle "explosion" de saveur à l'arrivée en bouche`,
-//   };
-//   const where = new Where(transformer, conditions).toText().text;
-//   assertEquals(where, "WHERE comment = 'Belle explosion de saveur à l'arrivée en bouche'");
-// });
+  assertEquals(text, "WHERE comment = $1");
+  assertEquals(args, ["'Hi mom!'"]);
+});
 
 Deno.test("Where two equals AND", () => {
   const conditions = new Where(transformer, { field: "wineId", equals: 1 })
     .and({ field: "comment", equals: "Hi mom!" });
 
-  const where = conditions.toPreparedQuery().text;
-  assertEquals(where, "WHERE wine_id = 1 AND comment = 'Hi mom!'");
+  const { text, args } = conditions.toPreparedQuery();
+
+  assertEquals(text, "WHERE wine_id = $1 AND comment = $2");
+  assertEquals(args, [1, "'Hi mom!'"]);
 });
 
 Deno.test("Where multiple equals AND", () => {
@@ -77,8 +73,10 @@ Deno.test("Where multiple equals AND", () => {
     .and({ field: "comment", equals: "Hi mom!" })
     .and({ field: "type", equals: 1 });
 
-  const where = conditions.toPreparedQuery().text;
-  assertEquals(where, "WHERE wine_id = 1 AND comment = 'Hi mom!' AND type = 1");
+  const { text, args } = conditions.toPreparedQuery();
+
+  assertEquals(text, "WHERE wine_id = $1 AND comment = $2 AND type = $3");
+  assertEquals(args, [1, "'Hi mom!'", 1]);
 });
 
 Deno.test("Where multiple equals AND & OR", () => {
@@ -86,8 +84,10 @@ Deno.test("Where multiple equals AND & OR", () => {
     .and({ field: "comment", equals: "Hi mom!" })
     .or({ field: "type", equals: 1 });
 
-  const where = conditions.toPreparedQuery().text;
-  assertEquals(where, "WHERE wine_id = 1 AND comment = 'Hi mom!' OR type = 1");
+  const { text, args } = conditions.toPreparedQuery();
+
+  assertEquals(text, "WHERE wine_id = $1 AND comment = $2 OR type = $3");
+  assertEquals(args, [1, "'Hi mom!'", 1]);
 });
 
 Deno.test("Where combined multiple equals AND", () => {
@@ -98,11 +98,12 @@ Deno.test("Where combined multiple equals AND", () => {
     }])
     .or({ field: "type", equals: 1 });
 
-  const where = conditions.toPreparedQuery().text;
+  const { text, args } = conditions.toPreparedQuery();
   assertEquals(
-    where,
-    "WHERE wine_id = 1 AND (comment = 'Hi mom!' AND type = 2) OR type = 1",
+    text,
+    "WHERE wine_id = $1 AND (comment = $2 AND type = $3) OR type = $4",
   );
+  assertEquals(args, [1, "'Hi mom!'", 2, 1]);
 });
 
 Deno.test("Where combined only multiple equals AND & OR", () => {
@@ -116,11 +117,12 @@ Deno.test("Where combined only multiple equals AND & OR", () => {
       { field: "type", equals: 3 },
     ]);
 
-  const where = conditions.toPreparedQuery().text;
+  const { text, args } = conditions.toPreparedQuery();
   assertEquals(
-    where,
-    "WHERE (comment = 'Hi mom!' AND type = 2) OR (type = 1 OR type = 3)",
+    text,
+    "WHERE (comment = $1 AND type = $2) OR (type = $3 OR type = $4)",
   );
+  assertEquals(args, ["'Hi mom!'", 2, 1, 3]);
 });
 
 Deno.test("Insert into", () => {
@@ -155,15 +157,16 @@ Deno.test("Select + From, multiple values", () => {
 });
 
 Deno.test("Select + From + Where, multiple values", () => {
-  const query = builder
+  const { text, args } = builder
     .select("wineId", "comment")
     .from("wine", "bottle")
     .where({ field: "wineId", equals: 1 })
     .and({ field: "comment", equals: "Hi mom!" })
-    .getPreparedQuery().text;
+    .getPreparedQuery();
 
   assertEquals(
-    query,
-    "SELECT wine_id,comment FROM wine,bottle WHERE wine_id = 1 AND comment = 'Hi mom!';",
+    text,
+    "SELECT wine_id,comment FROM wine,bottle WHERE wine_id = $1 AND comment = $2;",
   );
+  assertEquals(args, [1, "'Hi mom!'"]);
 });

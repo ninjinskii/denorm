@@ -64,9 +64,9 @@ Deno.test("Where single condition", async () => {
       .select("wine_id")
       .from("test")
       .where({ field: "comment", equals: "Hi mom!" })
-      .execute()
+      .execute();
 
-    assertEquals(actual, [{ wineId: 2 }]);
+    assertEquals(actual, [{ wineId: 1 }]);
   });
 });
 
