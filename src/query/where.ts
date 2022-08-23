@@ -9,6 +9,7 @@ export interface WhereCondition {
   like?: string;
 }
 
+// Replace like, supe, inf with an enum named operator, & and & or by an enum named agregator
 export interface InternalWhereCondition {
   field: string;
   equals?: number | string | boolean;
@@ -42,9 +43,11 @@ export class Where extends QueryPart {
   toPreparedQuery(): PreparedQuery {
     this.mapFields();
 
+    const args = [];
     let text = "WHERE ";
     let inChain = false;
     let firstLoop = true;
+    let preparedArgsCounter = 1;
 
     for (const condition of this.conditions as InternalWhereCondition[]) {
       let operator = "";
@@ -82,19 +85,19 @@ export class Where extends QueryPart {
         agregator = "";
       }
 
-      if (typeof value === "string") {
-        value = `'${value}'`;
-      }
+      // if (typeof value === "string") {
+      //   value = `'${value}'`;
+      // }
 
       text +=
-        `${agregator} ${maybeOpenChain}${condition.field} ${operator} ${value}${maybeCloseChain}`
+        `${agregator} ${maybeOpenChain}${condition.field} ${operator} $${preparedArgsCounter++}${maybeCloseChain}`
           .trim();
 
+      args.push(value);
       firstLoop = false;
     }
 
-    // TODO: transform to real prepared query
-    return { text };
+    return { text, args };
   }
 
   private mapFields() {
