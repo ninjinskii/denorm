@@ -58,10 +58,11 @@ export class Create extends QueryPart {
 
     for (const field of this.fields) {
       const { name, type, size, nullable, primaryKey, as } = field;
-      const text = `${as || name} ${type}${size || ""} ${
-        primaryKey ? "PRIMARY KEY" : ""
-      } ${nullable || primaryKey ? "" : "NOT NULL"}`
-        .trim();
+      const pk = primaryKey ? "PRIMARY KEY" : "";
+      const nul = nullable || primaryKey ? "" : "NOT NULL";
+      const t = size ? `${type}(${size})` : type;
+      const text = [as || name, t, pk, nul].filter((text) => text !== "")
+        .join(" ");
 
       fieldsText.push(text);
     }
