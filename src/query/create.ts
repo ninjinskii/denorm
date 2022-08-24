@@ -4,6 +4,7 @@ import { PreparedQuery, QueryPart } from "./query-part.ts";
 
 export interface Field {
   type: Type;
+  name: string,
   primaryKey?: boolean;
   size?: number;
   as?: string;
@@ -51,6 +52,6 @@ export class Create extends QueryPart {
   }
 
   toPreparedQuery(): PreparedQuery {
-    return { text: this.fields.join("\n") };
+    return { text: this.fields.map((f) => JSON.stringify(f)).join("\n") };
   }
 }
