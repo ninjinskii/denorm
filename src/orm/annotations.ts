@@ -27,11 +27,25 @@ export async function initTables(databaseUrl: string, _types: any[]) {
 
   const fieldByTable: Array<Field[]> = [];
   const tableNames: string[] = [];
+  let hasPrimaryKey = true;
 
   for (const field of fields) {
     const name = (field as TableSeparator).tableName;
+    const primaryKey = (field as Field).primaryKey;
+
+    if (primaryKey) {
+      hasPrimaryKey = true;
+    }
 
     if (name) {
+      if (!hasPrimaryKey) {
+        const previousTable = tableNames[tableNames.length - 1];
+        throw new Error(
+          `Table "${previousTable}" has no primary key, use @PrimaryKey on a property.`,
+        );
+      }
+
+      hasPrimaryKey = false; // Switch table. So we want to look for a new PK
       tableNames.push(name);
       fieldByTable.push([]); // This empty array is a slot for next fields of this new table
     } else {
@@ -57,7 +71,7 @@ export async function initTables(databaseUrl: string, _types: any[]) {
     await executor.submitQuery(query);
   }
 
-  await executor["client"]?.end()
+  await executor["client"]?.end();
 }
 
 export function Entity(tableName: string) {
