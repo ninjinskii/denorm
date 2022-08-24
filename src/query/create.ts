@@ -47,7 +47,7 @@ export class Create extends QueryPart {
     this.fields = fields;
 
     if (this.fields.length === 0) {
-      throw new Error("Create table cannot be empty");
+      // throw new Error("Create table cannot be empty");
     }
   }
 
