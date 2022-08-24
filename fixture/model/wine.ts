@@ -1,10 +1,12 @@
 import {
+Entity,
   Field,
   Nullable,
   PrimaryKey,
   SizedField,
 } from "../../src/orm/annotations.ts";
 
+@Entity("wine")
 export class Wine {
   constructor(
     @PrimaryKey("SERIAL") public id: number,
