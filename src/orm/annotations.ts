@@ -1,5 +1,8 @@
 // Ultra generic annotations, we expect weird type
 // deno-lint-ignore-file
+
+import { FieldDescription } from "../query/create.ts";
+
 // deno-lint-ignore-file no-explicit-any
 let orm: string[] = [];
 let marks: Mark[] = [];
@@ -29,8 +32,6 @@ export function initTable(instance: any, tableName: string) {
     defineRow(key, typeof value, index);
     index++;
   }
-
-  console.log(orm);
 }
 
 export function PrimaryKey(
@@ -105,42 +106,45 @@ export function Boolean(nullable = _.NOT_NULLABLE) {
   };
 }
 
-function defineRow(propertyKey: string, type: string, index: number) {
+function defineRow(
+  propertyKey: string,
+  type: string,
+  index: number,
+): FieldDescription {
   let dbType = "";
   let nullable = _.NOT_NULLABLE;
   const mark = getMarkForIndex(index);
 
-  if (mark && mark.primaryKey) {
-    const serial = mark.primaryKey.serial ? "SERIAL " : " ";
-    const queryPart = `${propertyKey} ${serial}PRIMARY KEY`;
-    orm.push(queryPart);
-    return;
+  switch (type) {
+    case "string":
+      dbType = "VARCHAR";
+      break;
+
+    case "number":
+      dbType = "INT";
+      break;
+
+    case "boolean":
+      dbType = "BOOLEAN";
+      break;
+
+    default:
   }
 
-  if (mark) {
-    dbType = mark.type;
-    nullable = mark.nullable;
-  } else {
-    switch (type) {
-      case "string":
-        dbType = "VARCHAR";
-        break;
+  return {
+    type,
+    fieldName: propertyKey,
+    nullable: mark ? !!mark.nullable : !!_.NOT_NULLABLE,
+    primaryKey: mark ? mark.primaryKey : undefined,
+    // const serial = mark.primaryKey.serial ? "SERIAL " : " ";
+    // const queryPart = `${propertyKey} ${serial}PRIMARY KEY`;
+    // orm.push(queryPart);
+    // return;
+  };
 
-      case "number":
-        dbType = "INTEGER";
-        break;
-
-      case "boolean":
-        dbType = "BOOLEAN";
-        break;
-
-      default:
-    }
-  }
-
-  const notNull = nullable ? "" : " NOT NULL";
-  const queryPart = `${propertyKey} ${dbType}${notNull}`;
-  orm.push(queryPart);
+  // const notNull = nullable ? "" : " NOT NULL";
+  // const queryPart = `${propertyKey} ${dbType}${notNull}`;
+  // orm.push(queryPart);
 }
 
 function getMarkForIndex(index: number): Mark | undefined {
