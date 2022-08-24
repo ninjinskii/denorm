@@ -1,3 +1,4 @@
+import { Create } from "./create.ts";
 import { From } from "./from.ts";
 import { Insert } from "./insert.ts";
 import { QueryExecutor } from "./query-executor.ts";
@@ -22,6 +23,7 @@ export class QueryBuilder {
   private _whereConditions: Array<WhereCondition | WhereCondition[]> = [];
   private _agregators: Agregator[] = [];
   private _insert: Insert | null = null;
+  private _create: Create | null = null;
   private whereIsCalled = false;
 
   constructor(transformer: FieldTransformer | null, databaseUrl: string) {
@@ -161,6 +163,7 @@ export class QueryBuilder {
     this._whereConditions = [];
     this._agregators = [];
     this._insert = null;
+    this._create = null;
     this.whereIsCalled = false;
   }
 
@@ -169,7 +172,7 @@ export class QueryBuilder {
       this.prepareWhere();
     }
 
-    if (!this._select && !this._insert) {
+    if (!this._select && !this._insert && !this._create) {
       throw new Error("Empty query");
     }
 
@@ -180,6 +183,12 @@ export class QueryBuilder {
     if (this._insert && (this._select || this._from || this._where)) {
       throw new Error(
         "Cannot use insert and another builder method in the same query",
+      );
+    }
+
+    if (this._create && (this._select || this._from || this._where)) {
+      throw new Error(
+        "Cannot use create and another builder method in the same query",
       );
     }
   }
