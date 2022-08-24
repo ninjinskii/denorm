@@ -1,20 +1,19 @@
 import {
-  _,
-  BigInt,
-  Boolean,
+  Field,
+  Nullable,
   PrimaryKey,
-  Varchar,
+  SizedField,
 } from "../../src/orm/annotations.ts";
 
 export class Wine {
   constructor(
-    @PrimaryKey() public id: number,
-    public naming: string,
-    @Varchar(null, _.NULLABLE) public name: string | null,
-    @Varchar(255) public comment: string,
-    public bottleId: number,
-    @BigInt() public date: number,
-    @Boolean() public isMidday: boolean,
+    @PrimaryKey("SERIAL") public id: number,
+    @Field("VARCHAR") public naming: string,
+    @Field("VARCHAR", Nullable.YES) public name: string | null,
+    @SizedField("VARCHAR", Nullable.NO, 255) public comment: string,
+    @Field("INT", Nullable.NO, "bottle_id") public bottleId: number,
+    @Field("BIGINT") public date: number,
+    @Field("BOOL") public isMidday: boolean,
   ) {
   }
 }
