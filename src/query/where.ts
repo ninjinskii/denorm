@@ -1,5 +1,5 @@
+import { PreparedQueryText, QueryPart } from "./query.ts";
 import { FieldTransformer } from "./query-builder.ts";
-import { PreparedQuery, QueryPart } from "./query-part.ts";
 
 export interface WhereCondition {
   field: string;
@@ -40,7 +40,7 @@ export class Where extends QueryPart {
     }
   }
 
-  toPreparedQuery(): PreparedQuery {
+  toText(): PreparedQueryText {
     this.mapFields();
 
     const args = [];

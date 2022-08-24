@@ -1,7 +1,7 @@
 import { QueryObjectResult } from "https://deno.land/x/postgres@v0.16.1/query/query.ts";
 import { Client, Transaction } from "../../deps.ts";
+import { QueryText } from "./query.ts";
 import { FieldTransformer } from "./query-builder.ts";
-import { PreparedQuery } from "./query-part.ts";
 
 export class QueryExecutor {
   private client: Client | null = null;
@@ -30,14 +30,11 @@ export class QueryExecutor {
     return this.client !== null;
   }
 
-  async submitQuery<T>(query: PreparedQuery): Promise<T[]> {
+  async submitQuery<T>(query: QueryText): Promise<T[]> {
     await this.healthCheck();
     const client = this.client as Client;
-    const { text, args } = query;
-
     const result = await client.queryObject<QueryObjectResult<T>>({
-      text,
-      args,
+      ...query,
       camelcase: this.useNativeCamel,
     });
 

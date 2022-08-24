@@ -1,6 +1,6 @@
 import { Nullable } from "../orm/annotations.ts";
+import { QueryText, QueryPart } from "./query.ts";
 import { FieldTransformer } from "./query-builder.ts";
-import { PreparedQuery, QueryPart } from "./query-part.ts";
 
 export interface Field {
   type: Type;
@@ -51,7 +51,7 @@ export class Create extends QueryPart {
     }
   }
 
-  toPreparedQuery(): PreparedQuery {
+  toText(): QueryText {
     const start = `CREATE TABLE IF NOT EXISTS ${this.tableName} (`;
     const end = `);`;
     const fieldsText = [];

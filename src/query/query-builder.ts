@@ -1,8 +1,8 @@
 import { Create } from "./create.ts";
 import { From } from "./from.ts";
 import { Insert } from "./insert.ts";
+import { PreparedQueryText, QueryText } from "./query.ts";
 import { QueryExecutor } from "./query-executor.ts";
-import { PreparedQuery } from "./query-part.ts";
 import { Select } from "./select.ts";
 import { InternalWhereCondition, Where, WhereCondition } from "./where.ts";
 
@@ -123,32 +123,32 @@ export class QueryBuilder {
   // Let the developer decide, defaulting to any in case no type is needed
   // deno-lint-ignore no-explicit-any
   execute<T = any>(): Promise<T[]> {
-    const preparedQuery = this.getPreparedQuery();
+    const preparedQuery = this.toText();
     return this.executor.submitQuery(preparedQuery);
   }
 
   // Let the developer decide, defaulting to any in case no type is needed
   // deno-lint-ignore no-explicit-any
   async executeAndGetFirst<T = any>(): Promise<T> {
-    const preparedQuery = this.getPreparedQuery();
+    const preparedQuery = this.toText();
     const array = await this.executor.submitQuery<T>(preparedQuery);
     return array[0];
   }
 
-  getPreparedQuery(): PreparedQuery {
+  toText(): PreparedQueryText {
     this.healthCheck();
 
     if (this._insert) {
-      const insert = this._insert.toPreparedQuery();
+      const insert = this._insert.toText();
       insert.text += ";";
       this.reset();
       return insert;
     }
 
-    const select = this._select?.toPreparedQuery();
-    const from = this._from?.toPreparedQuery();
-    const where = this._where?.toPreparedQuery();
-    const args = this._where?.toPreparedQuery().args;
+    const select = this._select?.toText();
+    const from = this._from?.toText();
+    const where = this._where?.toText();
+    const args = this._where?.toText().args || [];
     const all = [select, from, where];
 
     const text = all.map((part) => part?.text).join(" ").trim() + ";";
@@ -209,7 +209,7 @@ interface QueryBuilderAfterSelect {
 
 interface QueryBuilderAfterFrom {
   where: (condition: WhereCondition) => QueryBuilderAfterWhere;
-  getPreparedQuery: () => PreparedQuery;
+  toText: () => QueryText;
   execute: <T>() => Promise<T[]>;
   executeAndGetFirst: <T>() => Promise<T>;
 }
@@ -217,11 +217,11 @@ interface QueryBuilderAfterFrom {
 interface QueryBuilderAfterWhere {
   and: (condition: WhereCondition | WhereCondition[]) => QueryBuilderAfterWhere;
   or: (condition: WhereCondition | WhereCondition[]) => QueryBuilderAfterWhere;
-  getPreparedQuery: () => PreparedQuery;
+  toText: () => PreparedQueryText;
   execute: <T>() => Promise<T[]>;
 }
 
 interface QueryBuilderAfterInsert {
-  getPreparedQuery: () => PreparedQuery;
+  toText: () => PreparedQueryText;
   execute: <T>() => Promise<T[]>;
 }

@@ -66,7 +66,7 @@ export async function initTables(databaseUrl: string, _types: any[]) {
       { toDbField: (a) => a, fromDbField: (a) => a },
       tableName,
       fields,
-    ).toPreparedQuery();
+    ).toText();
 
     await executor.submitQuery(query);
   }

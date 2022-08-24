@@ -19,34 +19,34 @@ const builder = new QueryBuilder(
 );
 
 Deno.test("Select all", () => {
-  const select = new Select(transformer, "*").toPreparedQuery().text;
+  const select = new Select(transformer, "*").toText().text;
   assertEquals(select, "SELECT *");
 });
 
 Deno.test("Select single field", () => {
-  const select = new Select(transformer, "wineId").toPreparedQuery().text;
+  const select = new Select(transformer, "wineId").toText().text;
   assertEquals(select, "SELECT wine_id");
 });
 
 Deno.test("Select multiple fields", () => {
   const select = new Select(transformer, "wineId", "comment", "tastingId")
-    .toPreparedQuery().text;
+    .toText().text;
   assertEquals(select, "SELECT wine_id,comment,tasting_id");
 });
 
 Deno.test("From single table", () => {
-  const from = new From("wine").toPreparedQuery().text;
+  const from = new From("wine").toText().text;
   assertEquals(from, "FROM wine");
 });
 
 Deno.test("From multiple tables", () => {
-  const from = new From("wine", "bottle").toPreparedQuery().text;
+  const from = new From("wine", "bottle").toText().text;
   assertEquals(from, "FROM wine,bottle");
 });
 
 Deno.test("Where single equals int", () => {
   const conditions = { field: "wineId", equals: 1 };
-  const { text, args } = new Where(transformer, conditions).toPreparedQuery();
+  const { text, args } = new Where(transformer, conditions).toText();
 
   assertEquals(text, "WHERE wine_id = $1");
   assertEquals(args, [1]);
@@ -54,7 +54,7 @@ Deno.test("Where single equals int", () => {
 
 Deno.test("Where single equals string", () => {
   const conditions = { field: "comment", equals: "Hi mom!" };
-  const { text, args } = new Where(transformer, conditions).toPreparedQuery();
+  const { text, args } = new Where(transformer, conditions).toText();
 
   assertEquals(text, "WHERE comment = $1");
   assertEquals(args, ["Hi mom!"]);
@@ -64,7 +64,7 @@ Deno.test("Where two equals AND", () => {
   const conditions = new Where(transformer, { field: "wineId", equals: 1 })
     .and({ field: "comment", equals: "Hi mom!" });
 
-  const { text, args } = conditions.toPreparedQuery();
+  const { text, args } = conditions.toText();
 
   assertEquals(text, "WHERE wine_id = $1 AND comment = $2");
   assertEquals(args, [1, "Hi mom!"]);
@@ -75,7 +75,7 @@ Deno.test("Where multiple equals AND", () => {
     .and({ field: "comment", equals: "Hi mom!" })
     .and({ field: "type", equals: 1 });
 
-  const { text, args } = conditions.toPreparedQuery();
+  const { text, args } = conditions.toText();
 
   assertEquals(text, "WHERE wine_id = $1 AND comment = $2 AND type = $3");
   assertEquals(args, [1, "Hi mom!", 1]);
@@ -86,7 +86,7 @@ Deno.test("Where multiple equals AND & OR", () => {
     .and({ field: "comment", equals: "Hi mom!" })
     .or({ field: "type", equals: 1 });
 
-  const { text, args } = conditions.toPreparedQuery();
+  const { text, args } = conditions.toText();
 
   assertEquals(text, "WHERE wine_id = $1 AND comment = $2 OR type = $3");
   assertEquals(args, [1, "Hi mom!", 1]);
@@ -100,7 +100,7 @@ Deno.test("Where combined multiple equals AND", () => {
     }])
     .or({ field: "type", equals: 1 });
 
-  const { text, args } = conditions.toPreparedQuery();
+  const { text, args } = conditions.toText();
   assertEquals(
     text,
     "WHERE wine_id = $1 AND (comment = $2 AND type = $3) OR type = $4",
@@ -119,7 +119,7 @@ Deno.test("Where combined only multiple equals AND & OR", () => {
       { field: "type", equals: 3 },
     ]);
 
-  const { text, args } = conditions.toPreparedQuery();
+  const { text, args } = conditions.toText();
   assertEquals(
     text,
     "WHERE (comment = $1 AND type = $2) OR (type = $3 OR type = $4)",
@@ -134,7 +134,7 @@ Deno.test("Insert into", () => {
   ]);
 
   assertEquals(
-    insert.toPreparedQuery().text,
+    insert.toText().text,
     "INSERT INTO wine (wine_id, comment, tasting_taste_comment) VALUES ($1, $2, $3), ($4, $5, $6)",
   );
 });
@@ -147,7 +147,7 @@ Deno.test("Create table", () => {
   ];
 
   const create = new Create(transformer, "wine", fields);
-  const actual = create.toPreparedQuery().text;
+  const actual = create.toText().text;
 
   assertEquals(
     actual,
@@ -160,7 +160,7 @@ Deno.test("Select + From, single values", () => {
   const query = builder
     .select("*")
     .from("wine")
-    .getPreparedQuery().text;
+    .toText().text;
 
   assertEquals(query, "SELECT * FROM wine;");
 });
@@ -169,7 +169,7 @@ Deno.test("Select + From, multiple values", () => {
   const query = builder
     .select("wineId", "comment")
     .from("wine", "bottle")
-    .getPreparedQuery().text;
+    .toText().text;
 
   assertEquals(query, "SELECT wine_id,comment FROM wine,bottle;");
 });
@@ -180,7 +180,7 @@ Deno.test("Select + From + Where, multiple values", () => {
     .from("wine", "bottle")
     .where({ field: "wineId", equals: 1 })
     .and({ field: "comment", equals: "Hi mom!" })
-    .getPreparedQuery();
+    .toText();
 
   assertEquals(
     text,

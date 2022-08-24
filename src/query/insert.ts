@@ -1,7 +1,7 @@
 // We will work a lot with any since we're trying to be as generic as possible to insert anything in the db.
 // deno-lint-ignore-file no-explicit-any
+import { QueryPart, PreparedQueryText } from "./query.ts";
 import { FieldTransformer } from "./query-builder.ts";
-import { PreparedQuery, QueryPart } from "./query-part.ts";
 
 interface InsertValues {
   values: any[];
@@ -28,7 +28,7 @@ export class Insert extends QueryPart {
     }
   }
 
-  toPreparedQuery(): PreparedQuery {
+  toText(): PreparedQueryText {
     const fields = this.extractFields();
     const { values, preparedValues } = this.extractValues();
     const args = values;
