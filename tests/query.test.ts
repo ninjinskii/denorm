@@ -1,4 +1,6 @@
 import { assertEquals } from "../deps.ts";
+import { Nullable } from "../src/orm/annotations.ts";
+import { Create, Field } from "../src/query/create.ts";
 import { From } from "../src/query/from.ts";
 import { Insert } from "../src/query/insert.ts";
 import { FieldTransformer, QueryBuilder } from "../src/query/query-builder.ts";
@@ -134,6 +136,22 @@ Deno.test("Insert into", () => {
   assertEquals(
     insert.toPreparedQuery().text,
     "INSERT INTO wine (wine_id, comment, tasting_taste_comment) VALUES ($1, $2, $3), ($4, $5, $6)",
+  );
+});
+
+Deno.test("Create table", () => {
+  const fields: Field[] = [
+    { name: "id", type: "SERIAL", primaryKey: true },
+    { name: "bottleId", type: "INT", as: "bottle_id" },
+    { name: "tasting_id", type: "INT", nullable: Nullable.YES },
+  ];
+
+  const create = new Create(transformer, "wine", fields);
+  const actual = create.toPreparedQuery().text;
+
+  assertEquals(
+    actual,
+    `CREATE TABLE IF NOT EXISTS wine (id SERIAL PRIMARY KEY, bottle_id INT NOT NULL, tasting_id INT);`,
   );
 });
 
