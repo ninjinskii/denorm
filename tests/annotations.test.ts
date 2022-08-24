@@ -1,11 +1,7 @@
 import { assertEquals } from "../deps.ts";
-import {
-  Entity,
-  Field,
-  initTables,
-  Nullable,
-  PrimaryKey,
-} from "../src/orm/annotations.ts";
+import { Bottle } from "../fixture/model/bottle.ts";
+import { Wine } from "../fixture/model/wine.ts";
+import { initTables } from "../src/orm/annotations.ts";
 import { FieldTransformer, QueryBuilder } from "../src/query/query-builder.ts";
 import { snakeCase } from "../src/util/case.ts";
 
@@ -24,44 +20,76 @@ const builder = new QueryBuilder(
 Deno.test("Create single table", async () => {
   await withDatabase(async () => {
     await dropTables();
-    await initTables(databaseUrl, [Annotations]);
+    await initTables(databaseUrl, [Wine]);
     await builder
-      .insert("annotations", [{ id: 1, comment: "Hi mom!" }])
+      .insert("wine", [{
+        id: 1,
+        naming: "Hi mom!",
+        name: null,
+        comment: "",
+        bottle_id: 1,
+        date: 1n,
+        taste_good: true,
+      }])
       .execute();
 
     const result = await builder
       .select("*")
-      .from("annotations")
+      .from("wine")
       .execute();
 
-    assertEquals(result, [{ id: 1, comment: "Hi mom!" }]);
+    assertEquals(result, [{
+      id: 1,
+      naming: "Hi mom!",
+      name: null,
+      comment: "",
+      bottleId: 1,
+      date: 1n,
+      tasteGood: true,
+    }]);
   });
 });
 
 Deno.test("Create multipe table", async () => {
   await withDatabase(async () => {
     await dropTables();
-    await initTables(databaseUrl, [Annotations, Annotations2]);
+    await initTables(databaseUrl, [Wine, Bottle]);
     await builder
-      .insert("annotations", [{ id: 2, comment: "Hi mom!" }])
+      .insert("wine", [{
+        id: 1,
+        naming: "Hi mom!",
+        name: null,
+        comment: "",
+        bottleId: 1,
+        date: 1n,
+        tasteGood: true,
+      }])
       .execute();
 
     await builder
-      .insert("annotations_2", [{ id: 1, comment: null }])
+      .insert("bottle", [{ bottle_id: 1, bottle_size: "" }])
       .execute();
 
     const result = await builder
       .select("*")
-      .from("annotations")
+      .from("wine")
       .execute();
 
     const result2 = await builder
       .select("*")
-      .from("annotations_2")
+      .from("bottle")
       .execute();
 
-    assertEquals(result, [{ id: 2, comment: "Hi mom!" }]);
-    assertEquals(result2, [{ id: 1, comment: null }]);
+    assertEquals(result2, [{ bottleId: 1, bottleSize: "" }]);
+    assertEquals(result, [{
+      id: 1,
+      naming: "Hi mom!",
+      name: null,
+      comment: "",
+      bottleId: 1,
+      date: 1n,
+      tasteGood: true,
+    }]);
   });
 });
 
@@ -73,24 +101,6 @@ async function withDatabase(block: () => Promise<void>) {
 
 async function dropTables() {
   await builder["executor"]["client"]?.queryObject(
-    "DROP TABLE IF EXISTS annotations, annotations_2;",
+    "DROP TABLE IF EXISTS wine, bottle;",
   );
-}
-
-@Entity("annotations")
-class Annotations {
-  constructor(
-    @PrimaryKey("SERIAL") public id: number,
-    @Field("VARCHAR") public comment: string,
-  ) {
-  }
-}
-
-@Entity("annotations_2")
-class Annotations2 {
-  constructor(
-    @PrimaryKey("SERIAL") public id: number,
-    @Field("VARCHAR", Nullable.YES) public comment: string | null,
-  ) {
-  }
 }
