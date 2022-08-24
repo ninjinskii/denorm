@@ -41,8 +41,6 @@ export class QueryExecutor {
       camelcase: this.useNativeCamel,
     });
 
-    console.log(query);
-
     return (this.useNativeCamel
       ? result.rows
       : this.maybeRenameKeys(result)) as unknown as T[];
