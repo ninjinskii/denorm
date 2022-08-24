@@ -1,5 +1,6 @@
-import { Field, Nullable, PrimaryKey } from "../../src/orm/annotations.ts";
+import { Entity, Field, Nullable, PrimaryKey } from "../../src/orm/annotations.ts";
 
+@Entity("bottle")
 export class Bottle {
   constructor(
     @PrimaryKey("SERIAL", "bottle_id") public bottleId: number,

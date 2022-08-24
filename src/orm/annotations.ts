@@ -1,37 +1,54 @@
 // Ultra generic annotations, we expect weird type
-// deno-lint-ignore-file no-explicit-any
+// deno-lint-ignore-file no-explicit-any ban-types
 
 import { Create, Field, SizeableType, Type } from "../query/create.ts";
 
-let fields: Field[] = [];
-let resetOnNextInitTable = false;
+const fields: Array<Field | TableSeparator> = [];
 
 export enum Nullable {
   YES = "NULLABLE",
   NO = "NOT NULL",
 }
 
-export interface Table {
-  type: any;
-  name: string;
+interface TableSeparator {
+  tableName: string;
 }
 
-export function initTable(_type: any, tableName: string): Field[] {
-  // We wont use the type, but we need it to be evaluated.
+export function initTables(_types: any[]) {
+  // We wont use the types, but we need them to be evaluated.
   // Evaluating the type will trigger model's annotations
   // without us having to provide an instance of model
   // and describing fake parameters (e.g new Wine("", "", 1, ""))
   // to comply with TS type checks
 
-  console.log(`init table ${tableName}`);
-  const copy = [...fields];
-  const create = new Create(
-    { toDbField: (a) => a, fromDbField: (a) => a },
-    tableName,
-    copy,
-  );
+  const fieldByTable: Array<Field[]> = [];
+  const tableNames: string[] = [];
 
-  return copy;
+  for (const field of fields) {
+    const name = (field as TableSeparator).tableName;
+
+    if (name) {
+      tableNames.push(name);
+      fieldByTable.push([]); // This empty array is a slot for next fields of this new table
+    } else {
+      fieldByTable[fieldByTable.length - 1].push(field as Field);
+    }
+  }
+
+  for (const [index, fields] of fieldByTable.entries()) {
+    const tableName = tableNames[index];
+    const create = new Create(
+      { toDbField: (a) => a, fromDbField: (a) => a },
+      tableName,
+      fields,
+    ).toPreparedQuery();
+  }
+}
+
+export function Entity(tableName: string) {
+  return function (_constructor: Function) {
+    fields.unshift({ tableName });
+  };
 }
 
 export function Field(
@@ -88,23 +105,8 @@ function processAnnotation(
   as?: string,
   size?: number,
 ) {
-  console.log(`process annotation ${parameterIndex}`);
-
-  if (resetOnNextInitTable) {
-    fields = [];
-    resetOnNextInitTable = false;
-  }
-
   // Black magic to get actual class property name on which this annotation was placed
-  const keys = Object.keys(new target());
-  const name = keys[parameterIndex];
-  const length = keys.length;
-
-  // +1: paramaterIndex starts at 0
-  if (length === parameterIndex + 2) {
-    // We're on the last anotation processed (the first in the model object)
-    resetOnNextInitTable = true;
-  }
+  const name = Object.keys(new target())[parameterIndex];
 
   const primaryKey = isPrimaryKey || undefined;
   const field = { type, primaryKey, as, nullable, name, size };
