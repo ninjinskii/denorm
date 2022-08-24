@@ -1,152 +1,95 @@
 // Ultra generic annotations, we expect weird type
 // deno-lint-ignore-file
 
-import { FieldDescription } from "../query/create.ts";
+import { Create, Field, SizeableType, Type } from "../query/create.ts";
 
 // deno-lint-ignore-file no-explicit-any
-let orm: string[] = [];
-let marks: Mark[] = [];
+let fields: Field[] = [];
 
-interface Mark {
-  primaryKey?: { serial: boolean };
-  parameterIndex: number;
-  type: string;
-  nullable: _;
+export enum Nullable {
+  YES = "NULLABLE",
+  NO = "NOT NULL",
 }
 
-// Boolean as numeric to help clarify developer intention
-export enum _ {
-  NULLABLE = 1,
-  NOT_NULLABLE = 0,
+// We don't use _instance and that's normal. An instace of each model classe needs to be
+// instantiated so we get our annotations running.
+export function initTable(_instance: any, tableName: string) {
+  const create = new Create(
+    { toDbField: (a) => a, fromDbField: (a) => a },
+    tableName,
+    fields,
+  );
 }
 
-export enum PrimaryKeyType {
-  STRING = "VARCHAR",
-  INTEGER = "INT",
-}
-
-export function initTable(instance: any, tableName: string) {
-  let index = 0;
-
-  for (const [key, value] of Object.entries(instance)) {
-    defineRow(key, typeof value, index);
-    index++;
-  }
-}
-
-export function PrimaryKey(
-  autoIncrement = true,
-  type = PrimaryKeyType.INTEGER,
+export function Field(
+  type: Type,
+  nullable?: Nullable,
+  as?: string,
 ) {
   return function (
-    _target: any,
+    target: any,
     propertyKey: string | symbol,
     parameterIndex: number,
   ) {
-    marks.push({
-      primaryKey: { serial: autoIncrement },
-      parameterIndex,
+    maybeResetFieldArray(target, parameterIndex);
+
+    console.log("parameterIndex");
+    console.log(parameterIndex);
+    // Note that last parameters annotation's runs first
+    fields.unshift({ type, primaryKey: false, as, nullable });
+  };
+}
+
+export function SizedField(
+  type: Type,
+  nullable?: Nullable,
+  size?: number,
+  as?: string,
+) {
+  return function (
+    target: any,
+    propertyKey: string | symbol,
+    parameterIndex: number,
+  ) {
+    maybeResetFieldArray(target, parameterIndex);
+
+    let s = size;
+
+    if (type! in SizeableType) {
+      s = undefined;
+    }
+    console.log("parameterIndex");
+    console.log(parameterIndex);
+
+    // Note that last parameters annotation's runs first
+    fields.unshift({ type, size: s, primaryKey: false, as, nullable });
+  };
+}
+
+export function PrimaryKey(type: Type, as?: string) {
+  return function (
+    target: any,
+    propertyKey: string | symbol,
+    parameterIndex: number,
+  ) {
+    maybeResetFieldArray(target, parameterIndex);
+
+    console.log("parameterIndex");
+    console.log(parameterIndex);
+    // Note that last parameters annotation's runs first
+    fields.unshift({
       type,
-      nullable: _.NOT_NULLABLE,
+      primaryKey: true,
+      as,
+      nullable: Nullable.NO,
     });
   };
 }
 
-export function Varchar(
-  size: number | null = null,
-  nullable = _.NOT_NULLABLE,
-) {
-  return function (
-    _target: any,
-    propertyKey: string | symbol,
-    parameterIndex: number,
-  ) {
-    const type = size ? `VARCHAR(${size})` : "VARCHAR";
-    marks.push({ parameterIndex, type, nullable });
-  };
-}
+function maybeResetFieldArray(target: any, parameterIndex: number) {
+  const fieldsCount = Object.keys(target).length;
 
-export function BigInt(nullable = _.NOT_NULLABLE) {
-  return function (
-    _target: any,
-    propertyKey: string | symbol,
-    parameterIndex: number,
-  ) {
-    marks.push({ parameterIndex, type: "BIGINT", nullable });
-  };
-}
-
-export function Int(nullable = _.NOT_NULLABLE) {
-  return function (
-    _target: any,
-    propertyKey: string | symbol,
-    parameterIndex: number,
-  ) {
-    marks.push({ parameterIndex, type: "INT", nullable });
-  };
-}
-
-export function Real(nullable = _.NOT_NULLABLE) {
-  return function (
-    _target: any,
-    propertyKey: string | symbol,
-    parameterIndex: number,
-  ) {
-    marks.push({ parameterIndex, type: "REAL", nullable });
-  };
-}
-
-export function Boolean(nullable = _.NOT_NULLABLE) {
-  return function (
-    _target: any,
-    propertyKey: string | symbol,
-    parameterIndex: number,
-  ) {
-    marks.push({ parameterIndex, type: "BOOLEAN", nullable });
-  };
-}
-
-function defineRow(
-  propertyKey: string,
-  type: string,
-  index: number,
-): FieldDescription {
-  let dbType = "";
-  let nullable = _.NOT_NULLABLE;
-  const mark = getMarkForIndex(index);
-
-  switch (type) {
-    case "string":
-      dbType = "VARCHAR";
-      break;
-
-    case "number":
-      dbType = "INT";
-      break;
-
-    case "boolean":
-      dbType = "BOOLEAN";
-      break;
-
-    default:
+  if (parameterIndex === fieldsCount - 1) {
+    fields = Array(fieldsCount);
   }
-
-  return {
-    type,
-    fieldName: propertyKey,
-    nullable: mark ? !!mark.nullable : !!_.NOT_NULLABLE,
-    primaryKey: mark ? mark.primaryKey : undefined,
-    // const serial = mark.primaryKey.serial ? "SERIAL " : " ";
-    // const queryPart = `${propertyKey} ${serial}PRIMARY KEY`;
-    // orm.push(queryPart);
-    // return;
-  };
-
-  // const notNull = nullable ? "" : " NOT NULL";
-  // const queryPart = `${propertyKey} ${dbType}${notNull}`;
-  // orm.push(queryPart);
-}
-
-function getMarkForIndex(index: number): Mark | undefined {
-  return marks.find((mark) => mark.parameterIndex === index);
 }

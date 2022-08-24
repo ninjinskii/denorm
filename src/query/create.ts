@@ -1,34 +1,56 @@
+import { Nullable } from "../orm/annotations.ts";
 import { FieldTransformer } from "./query-builder.ts";
 import { PreparedQuery, QueryPart } from "./query-part.ts";
 
-export interface FieldDescription {
-  type: string;
-  fieldName: string;
-  nullable: boolean;
-  primaryKey?: { serial: boolean };
+export interface Field {
+  type: Type;
+  primaryKey?: boolean;
+  size?: number;
+  as?: string;
+  nullable?: Nullable;
+}
+
+export type Type =
+  | "BIGINT"
+  | "BOOL"
+  | "BYTEA"
+  | "CHAR"
+  | "VARCHAR"
+  | "DATE"
+  | "FLOAT8"
+  | "FLOAT4"
+  | "INT"
+  | "JSON"
+  | "JSONB"
+  | "SERIAL"
+  | "SERIAL8";
+
+export enum SizeableType {
+  "VARCHAR",
+  "CHAR",
 }
 
 export class Create extends QueryPart {
   private transformer: FieldTransformer | null;
   private tableName: string;
-  private fieldDescriptors: FieldDescription[];
+  private fields: Field[];
 
   constructor(
     transformer: FieldTransformer | null,
     tableName: string,
-    descriptors: FieldDescription[],
+    fields: Field[],
   ) {
     super();
     this.transformer = transformer;
     this.tableName = tableName;
-    this.fieldDescriptors = descriptors;
+    this.fields = fields;
 
-    if (this.fieldDescriptors.length === 0) {
+    if (this.fields.length === 0) {
       throw new Error("Create table cannot be empty");
     }
   }
 
   toPreparedQuery(): PreparedQuery {
-
+    return { text: this.fields.join("\n") };
   }
 }
