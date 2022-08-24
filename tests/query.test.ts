@@ -57,7 +57,7 @@ Deno.test("Where single equals string", () => {
   const { text, args } = new Where(transformer, conditions).toPreparedQuery();
 
   assertEquals(text, "WHERE comment = $1");
-  assertEquals(args, ["'Hi mom!'"]);
+  assertEquals(args, ["Hi mom!"]);
 });
 
 Deno.test("Where two equals AND", () => {
@@ -67,7 +67,7 @@ Deno.test("Where two equals AND", () => {
   const { text, args } = conditions.toPreparedQuery();
 
   assertEquals(text, "WHERE wine_id = $1 AND comment = $2");
-  assertEquals(args, [1, "'Hi mom!'"]);
+  assertEquals(args, [1, "Hi mom!"]);
 });
 
 Deno.test("Where multiple equals AND", () => {
@@ -78,7 +78,7 @@ Deno.test("Where multiple equals AND", () => {
   const { text, args } = conditions.toPreparedQuery();
 
   assertEquals(text, "WHERE wine_id = $1 AND comment = $2 AND type = $3");
-  assertEquals(args, [1, "'Hi mom!'", 1]);
+  assertEquals(args, [1, "Hi mom!", 1]);
 });
 
 Deno.test("Where multiple equals AND & OR", () => {
@@ -89,7 +89,7 @@ Deno.test("Where multiple equals AND & OR", () => {
   const { text, args } = conditions.toPreparedQuery();
 
   assertEquals(text, "WHERE wine_id = $1 AND comment = $2 OR type = $3");
-  assertEquals(args, [1, "'Hi mom!'", 1]);
+  assertEquals(args, [1, "Hi mom!", 1]);
 });
 
 Deno.test("Where combined multiple equals AND", () => {
@@ -105,7 +105,7 @@ Deno.test("Where combined multiple equals AND", () => {
     text,
     "WHERE wine_id = $1 AND (comment = $2 AND type = $3) OR type = $4",
   );
-  assertEquals(args, [1, "'Hi mom!'", 2, 1]);
+  assertEquals(args, [1, "Hi mom!", 2, 1]);
 });
 
 Deno.test("Where combined only multiple equals AND & OR", () => {
@@ -124,7 +124,7 @@ Deno.test("Where combined only multiple equals AND & OR", () => {
     text,
     "WHERE (comment = $1 AND type = $2) OR (type = $3 OR type = $4)",
   );
-  assertEquals(args, ["'Hi mom!'", 2, 1, 3]);
+  assertEquals(args, ["Hi mom!", 2, 1, 3]);
 });
 
 Deno.test("Insert into", () => {
@@ -186,5 +186,5 @@ Deno.test("Select + From + Where, multiple values", () => {
     text,
     "SELECT wine_id,comment FROM wine,bottle WHERE wine_id = $1 AND comment = $2;",
   );
-  assertEquals(args, [1, "'Hi mom!'"]);
+  assertEquals(args, [1, "Hi mom!"]);
 });
