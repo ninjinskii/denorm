@@ -12,7 +12,7 @@ export class Wine {
     public naming: string,
     @Varchar(null, _.NULLABLE) public name: string | null,
     @Varchar(255) public comment: string,
-    public bottle_id: number,
+    public bottleId: number,
     @BigInt() public date: number,
     @Boolean() public isMidday: boolean,
   ) {
