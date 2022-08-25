@@ -60,9 +60,9 @@ Deno.test("Create multipe table", async () => {
         naming: "Hi mom!",
         name: null,
         comment: "",
-        bottleId: 1,
+        bottle_id: 1,
         date: 1n,
-        tasteGood: true,
+        taste_good: true,
       }])
       .execute();
 
