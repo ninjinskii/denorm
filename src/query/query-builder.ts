@@ -64,7 +64,7 @@ export class QueryBuilder {
   // We can't guess the type
   // deno-lint-ignore no-explicit-any
   insert(tableName: string, objects: any[]): QueryBuilderAfterInsert {
-    this._insert = new Insert(this.transformer, tableName, objects);
+    this._insert = new Insert(tableName, objects);
     return this;
   }
 

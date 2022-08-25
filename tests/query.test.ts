@@ -128,9 +128,9 @@ Deno.test("Where combined only multiple equals AND & OR", () => {
 });
 
 Deno.test("Insert into", () => {
-  const insert = new Insert(transformer, "wine", [
-    { wineId: 1, comment: "Bon", tastingTasteComment: "Je l'ai bien aimé" },
-    { wineId: 2, comment: "", tastingTasteComment: "Moyen" },
+  const insert = new Insert("wine", [
+    { wine_id: 1, comment: "Bon", tasting_taste_comment: "Je l'ai bien aimé" },
+    { wine_id: 2, comment: "", tasting_taste_comment: "Moyen" },
   ]);
 
   assertEquals(

@@ -1,7 +1,6 @@
 // We will work a lot with any since we're trying to be as generic as possible to insert anything in the db.
 // deno-lint-ignore-file no-explicit-any
 import { PreparedQueryText, QueryPart, TableSelector } from "./query.ts";
-import { FieldTransformer } from "./query-builder.ts";
 
 interface InsertValues {
   values: any[];
@@ -9,17 +8,11 @@ interface InsertValues {
 }
 
 export class Insert extends QueryPart implements TableSelector {
-  private transformer: FieldTransformer | null;
   private tableName: string;
   private objects: any[];
 
-  constructor(
-    transformer: FieldTransformer | null,
-    tableName: string,
-    objects: any[],
-  ) {
+  constructor(tableName: string, objects: any[]) {
     super();
-    this.transformer = transformer;
     this.tableName = tableName;
     this.objects = objects;
 
@@ -41,14 +34,7 @@ export class Insert extends QueryPart implements TableSelector {
   private extractFields(): string {
     // We'll use the first object to determine fields to update
     const exampleObject = this.objects[0];
-    const fields = [];
-
-    for (const key of Object.keys(exampleObject)) {
-      const field = this.transformer?.toDbField(key) || key;
-      fields.push(field);
-    }
-
-    return fields.join(", ");
+    return Object.keys(exampleObject).join(", ");
   }
 
   private extractValues(): InsertValues {
