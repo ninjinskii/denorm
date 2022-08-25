@@ -41,7 +41,7 @@ Deno.test("From single table", () => {
 
 Deno.test("From multiple tables", () => {
   const from = new From("wine", "bottle").toText().text;
-  assertEquals(from, "FROM wine,bottle");
+  assertEquals(from, "FROM wine, bottle");
 });
 
 Deno.test("Where single equals int", () => {
@@ -171,7 +171,7 @@ Deno.test("Select + From, multiple values", () => {
     .from("wine", "bottle")
     .toText().text;
 
-  assertEquals(query, "SELECT wine_id,comment FROM wine,bottle;");
+  assertEquals(query, "SELECT wine_id,comment FROM wine, bottle;");
 });
 
 Deno.test("Select + From + Where, multiple values", () => {
@@ -184,7 +184,7 @@ Deno.test("Select + From + Where, multiple values", () => {
 
   assertEquals(
     text,
-    "SELECT wine_id,comment FROM wine,bottle WHERE wine_id = $1 AND comment = $2;",
+    "SELECT wine_id,comment FROM wine, bottle WHERE wine_id = $1 AND comment = $2;",
   );
   assertEquals(args, [1, "Hi mom!"]);
 });

@@ -1,4 +1,4 @@
-import { QueryText, QueryPart } from "./query.ts";
+import { QueryPart, QueryText } from "./query.ts";
 
 export class From extends QueryPart {
   private readonly tables: string[];
@@ -9,7 +9,7 @@ export class From extends QueryPart {
   }
 
   toText(): QueryText {
-    const formattedTables = this.tables.join(",");
+    const formattedTables = this.tables.join(", ");
     return { text: `FROM ${formattedTables}` };
   }
 }
