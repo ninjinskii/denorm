@@ -1,5 +1,4 @@
 import { PreparedQueryText, QueryPart } from "./query.ts";
-import { FieldTransformer } from "./query-builder.ts";
 
 export interface WhereCondition {
   field: string;
@@ -23,15 +22,10 @@ export interface InternalWhereCondition {
 
 export class Where extends QueryPart {
   private conditions: WhereCondition[] = [];
-  private transformer: FieldTransformer | null;
   private combinedOnly = false;
 
-  constructor(
-    transformer: FieldTransformer | null,
-    condition?: WhereCondition,
-  ) {
+  constructor(condition?: WhereCondition) {
     super();
-    this.transformer = transformer;
 
     if (condition) {
       this.conditions.push(condition);
@@ -41,8 +35,6 @@ export class Where extends QueryPart {
   }
 
   toText(): PreparedQueryText {
-    this.mapFields();
-
     const args = [];
     let text = "WHERE ";
     let inChain = false;
@@ -85,10 +77,6 @@ export class Where extends QueryPart {
         agregator = "";
       }
 
-      // if (typeof value === "string") {
-      //   value = `'${value}'`;
-      // }
-
       text +=
         `${agregator} ${maybeOpenChain}${condition.field} ${operator} $${preparedArgsCounter++}${maybeCloseChain}`
           .trim();
@@ -98,13 +86,6 @@ export class Where extends QueryPart {
     }
 
     return { text, args };
-  }
-
-  private mapFields() {
-    this.conditions = this.conditions.map((cond) => {
-      const dbField = this.transformer?.toDbField(cond.field) || cond.field;
-      return { ...cond, field: dbField };
-    });
   }
 
   private aggregate(

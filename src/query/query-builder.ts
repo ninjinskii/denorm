@@ -75,7 +75,7 @@ export class QueryBuilder {
 
     // Check if first conditions is not bounded with others (parenthesis), we settle it in constructor
     if (!Array.isArray(conditions[0])) {
-      where = new Where(this.transformer, conditions.shift() as WhereCondition);
+      where = new Where(conditions.shift() as WhereCondition);
 
       for (const agregator of agregators) {
         if (agregator === "AND") {
@@ -95,7 +95,7 @@ export class QueryBuilder {
         }
       }
     } else {
-      where = new Where(this.transformer);
+      where = new Where();
 
       // If this bug: we might need to reverse treatment of agregator and conditions
       for (const agregator of agregators) {

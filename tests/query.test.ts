@@ -46,7 +46,7 @@ Deno.test("From multiple tables", () => {
 
 Deno.test("Where single equals int", () => {
   const conditions = { field: "wine_id", equals: 1 };
-  const { text, args } = new Where(transformer, conditions).toText();
+  const { text, args } = new Where(conditions).toText();
 
   assertEquals(text, "WHERE wine_id = $1");
   assertEquals(args, [1]);
@@ -54,14 +54,14 @@ Deno.test("Where single equals int", () => {
 
 Deno.test("Where single equals string", () => {
   const conditions = { field: "comment", equals: "Hi mom!" };
-  const { text, args } = new Where(transformer, conditions).toText();
+  const { text, args } = new Where(conditions).toText();
 
   assertEquals(text, "WHERE comment = $1");
   assertEquals(args, ["Hi mom!"]);
 });
 
 Deno.test("Where two equals AND", () => {
-  const conditions = new Where(transformer, { field: "wineId", equals: 1 })
+  const conditions = new Where({ field: "wine_id", equals: 1 })
     .and({ field: "comment", equals: "Hi mom!" });
 
   const { text, args } = conditions.toText();
@@ -71,7 +71,7 @@ Deno.test("Where two equals AND", () => {
 });
 
 Deno.test("Where multiple equals AND", () => {
-  const conditions = new Where(transformer, { field: "wineId", equals: 1 })
+  const conditions = new Where({ field: "wine_id", equals: 1 })
     .and({ field: "comment", equals: "Hi mom!" })
     .and({ field: "type", equals: 1 });
 
@@ -82,7 +82,7 @@ Deno.test("Where multiple equals AND", () => {
 });
 
 Deno.test("Where multiple equals AND & OR", () => {
-  const conditions = new Where(transformer, { field: "wineId", equals: 1 })
+  const conditions = new Where({ field: "wine_id", equals: 1 })
     .and({ field: "comment", equals: "Hi mom!" })
     .or({ field: "type", equals: 1 });
 
@@ -93,7 +93,7 @@ Deno.test("Where multiple equals AND & OR", () => {
 });
 
 Deno.test("Where combined multiple equals AND", () => {
-  const conditions = new Where(transformer, { field: "wineId", equals: 1 })
+  const conditions = new Where({ field: "wine_id", equals: 1 })
     .and([{ field: "comment", equals: "Hi mom!" }, {
       field: "type",
       equals: 2,
@@ -109,7 +109,7 @@ Deno.test("Where combined multiple equals AND", () => {
 });
 
 Deno.test("Where combined only multiple equals AND & OR", () => {
-  const conditions = new Where(transformer)
+  const conditions = new Where()
     .and([
       { field: "comment", equals: "Hi mom!" },
       { field: "type", equals: 2 },
