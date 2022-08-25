@@ -1,23 +1,16 @@
 import { QueryObjectResult } from "https://deno.land/x/postgres@v0.16.1/query/query.ts";
 import { Client, Transaction } from "../../deps.ts";
 import { QueryText } from "./query.ts";
-import { FieldTransformer } from "./query-builder.ts";
 import { aliasTracker } from "../orm/annotations.ts";
 
 export class QueryExecutor {
   private client: Client | null = null;
   private transaction: Transaction | null = null;
   private databaseUrl: string;
-  private transformer: FieldTransformer | null;
   private useNativeCamel = false;
 
-  constructor(databaseUrl: string, transformer: FieldTransformer | null) {
+  constructor(databaseUrl: string) {
     this.databaseUrl = databaseUrl;
-    this.transformer = transformer;
-
-    if (this.transformer?.usePostgresNativeCamel) {
-      this.useNativeCamel = true;
-    }
   }
 
   private async init() {
@@ -53,32 +46,33 @@ export class QueryExecutor {
       query.affectedTables;
 
     if (!shouldRenameKeys) {
-      return queryResult as unknown as T[];
+      return queryResult.rows as unknown as T[];
     }
 
     const tables = query.affectedTables as string[];
-    const objects = [];
+    const objects: T[] = [];
 
     for (const object of queryResult.rows) {
       const o = object as never;
+      const replacer = {} as never;
 
       for (const key of Object.keys(o)) {
         if (tables.length === 1) {
-          const renamedKey = aliasTracker[tables[0]][key];
-          delete Object.assign(o, { [renamedKey]: o[key] })[key];
+          const renamedKey = aliasTracker[tables[0]][key] || key;
+          replacer[renamedKey] = o[key];
         } else if (tables.length > 1 && query.tableFields) {
           const table = query.tableFields.find((tableField) =>
             tableField.field === key
           )?.table;
 
           if (table) {
-            const renamedKey = aliasTracker[table][key];
-            delete Object.assign(o, { [renamedKey]: o[key] })[key];
+            const renamedKey = aliasTracker[table][key] || key;
+            replacer[renamedKey] = o[key];
           }
         }
       }
 
-      objects.push(object);
+      objects.push(replacer);
     }
 
     return objects;

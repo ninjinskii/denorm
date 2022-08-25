@@ -3,20 +3,12 @@ import { Nullable } from "../src/orm/annotations.ts";
 import { Create, Field } from "../src/query/create.ts";
 import { From } from "../src/query/from.ts";
 import { Insert } from "../src/query/insert.ts";
-import { FieldTransformer, QueryBuilder } from "../src/query/query-builder.ts";
+import { QueryBuilder } from "../src/query/query-builder.ts";
 import { Select } from "../src/query/select.ts";
 import { Where } from "../src/query/where.ts";
-import { camelCase, snakeCase } from "../src/util/case.ts";
 
-const transformer: FieldTransformer = {
-  toDbField: (clientField) => snakeCase(clientField),
-  fromDbField: (dbField) => camelCase(dbField),
-};
-
-const builder = new QueryBuilder(
-  transformer,
-  Deno.env.get("DATABASE_URL") || "",
-);
+const databaseUrl = Deno.env.get("DATABASE_URL") || "";
+const builder = new QueryBuilder(databaseUrl);
 
 Deno.test("Select all", () => {
   const select = new Select("*").toText().text;

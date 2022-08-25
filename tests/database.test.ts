@@ -1,17 +1,15 @@
 import { assertEquals } from "https://deno.land/std@0.141.0/testing/asserts.ts";
-import { FieldTransformer, QueryBuilder } from "../src/query/query-builder.ts";
-import { snakeCase } from "../src/util/case.ts";
+import { QueryBuilder } from "../src/query/query-builder.ts";
 
-const transformer: FieldTransformer = {
-  toDbField: (clientField) => snakeCase(clientField),
-  fromDbField: (dbField) => dbField,
-  usePostgresNativeCamel: true,
-};
+const databaseUrl = Deno.env.get("DATABASE_URL") || "";
+const builder = new QueryBuilder(databaseUrl);
 
-const builder = new QueryBuilder(
-  transformer,
-  Deno.env.get("DATABASE_URL") || "",
-);
+// IMPORTANT NOTE
+// Expected objects properties are in snake case.
+// This is normal, since in this file we don't init tables,
+// thus not populating the client / db field mapper.
+// Check annotations.test.ts to see properties named like
+// the original object.
 
 Deno.test("Insert single values, first result only", async () => {
   await withDatabase(async () => {
@@ -26,7 +24,7 @@ Deno.test("Insert single values, first result only", async () => {
       .from("test")
       .executeAndGetFirst();
 
-    assertEquals(actual, { wineId: 1, comment: "Hi mom!" });
+    assertEquals(actual, { wine_id: 1, comment: "Hi mom!" });
   });
 });
 
@@ -45,8 +43,8 @@ Deno.test("Insert multiple values", async () => {
       .execute();
 
     assertEquals(actual, [
-      { wineId: 1, comment: "Hi mom!" },
-      { wineId: 2, comment: `A 'weird" one '' héhé` },
+      { wine_id: 1, comment: "Hi mom!" },
+      { wine_id: 2, comment: `A 'weird" one '' héhé` },
     ]);
   });
 });
@@ -66,7 +64,7 @@ Deno.test("Select, but on multiple tables", async () => {
       .from("test", "test_2")
       .execute();
 
-    assertEquals(actual, [ { bottleSize: "Large", comment: "Hi mom!" } ])
+    assertEquals(actual, [{ bottle_size: "Large", comment: "Hi mom!" }]);
   });
 });
 
@@ -85,7 +83,7 @@ Deno.test("Where single condition", async () => {
       .where({ field: "comment", equals: "Hi mom!" })
       .execute();
 
-    assertEquals(actual, [{ wineId: 1 }]);
+    assertEquals(actual, [{ wine_id: 1 }]);
   });
 });
 

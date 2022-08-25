@@ -6,16 +6,9 @@ import { QueryExecutor } from "./query-executor.ts";
 import { Select } from "./select.ts";
 import { InternalWhereCondition, Where, WhereCondition } from "./where.ts";
 
-export interface FieldTransformer {
-  toDbField: (clientName: string) => string;
-  fromDbField: (fieldName: string) => string;
-  usePostgresNativeCamel?: boolean;
-}
-
 type Agregator = "AND" | "OR";
 
 export class QueryBuilder {
-  private transformer: FieldTransformer | null;
   private executor: QueryExecutor;
   private _select: Select | null = null;
   private _from: From | null = null;
@@ -26,9 +19,8 @@ export class QueryBuilder {
   private _create: Create | null = null;
   private whereIsCalled = false;
 
-  constructor(transformer: FieldTransformer | null, databaseUrl: string) {
-    this.transformer = transformer;
-    this.executor = new QueryExecutor(databaseUrl, this.transformer);
+  constructor(databaseUrl: string) {
+    this.executor = new QueryExecutor(databaseUrl);
   }
 
   select(...fields: string[]): QueryBuilderAfterSelect {
@@ -150,10 +142,11 @@ export class QueryBuilder {
     const where = this._where?.toText();
     const args = this._where?.toText().args || [];
     const all = [select, from, where];
+    const affectedTables = from?.affectedTables;
 
     const text = all.map((part) => part?.text).join(" ").trim() + ";";
     this.reset();
-    return { text, args };
+    return { text, args, affectedTables };
   }
 
   private reset() {

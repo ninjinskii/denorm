@@ -2,20 +2,10 @@ import { assertEquals } from "../deps.ts";
 import { Bottle } from "../fixture/model/bottle.ts";
 import { Wine } from "../fixture/model/wine.ts";
 import { initTables } from "../src/orm/annotations.ts";
-import { FieldTransformer, QueryBuilder } from "../src/query/query-builder.ts";
-import { snakeCase } from "../src/util/case.ts";
+import { QueryBuilder } from "../src/query/query-builder.ts";
 
 const databaseUrl = Deno.env.get("DATABASE_URL") || "";
-const transformer: FieldTransformer = {
-  toDbField: (clientField) => snakeCase(clientField),
-  fromDbField: (dbField) => dbField,
-  usePostgresNativeCamel: true,
-};
-
-const builder = new QueryBuilder(
-  transformer,
-  databaseUrl,
-);
+const builder = new QueryBuilder(databaseUrl);
 
 Deno.test("Create single table", async () => {
   await withDatabase(async () => {
