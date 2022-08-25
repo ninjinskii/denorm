@@ -6,6 +6,7 @@ import { QueryExecutor } from "./query-executor.ts";
 import { Select } from "./select.ts";
 import { InternalWhereCondition, Where, WhereCondition } from "./where.ts";
 import { Update, UpdateInfo } from "./update.ts";
+import { Delete } from "./delete.ts";
 
 type Agregator = "AND" | "OR";
 
@@ -19,6 +20,7 @@ export class QueryBuilder {
   private _insert: Insert | null = null;
   private _create: Create | null = null;
   private _update: Update | null = null;
+  private _delete: Delete | null = null;
   private whereIsCalled = false;
   private whereArgsOffset = 0;
 
@@ -66,6 +68,11 @@ export class QueryBuilder {
   update(tableName: string, ...updates: UpdateInfo[]): QueryBuilderAfterUpdate {
     this._update = new Update(tableName, updates);
     this.whereArgsOffset = updates.length;
+    return this;
+  }
+
+  delete(): QueryBuilderAfterDelete {
+    this._delete = new Delete();
     return this;
   }
 
@@ -159,6 +166,16 @@ export class QueryBuilder {
       return { text, args: mergeArgs };
     }
 
+    if (this._delete) {
+      const del = this._delete.toText();
+      const where = this._where?.toText();
+      const from = this._from?.toText();
+      const text = `${del.text} ${from?.text} ${where?.text};`;
+      this.reset();
+
+      return { text, args: where?.args || [] };
+    }
+
     const select = this._select?.toText();
     const from = this._from?.toText();
     const where = this._where?.toText();
@@ -180,6 +197,7 @@ export class QueryBuilder {
     this._insert = null;
     this._create = null;
     this._update = null;
+    this._delete = null;
     this.whereIsCalled = false;
     this.whereArgsOffset = 0;
   }
@@ -190,7 +208,10 @@ export class QueryBuilder {
       this.prepareWhere();
     }
 
-    if (!this._select && !this._insert && !this._create && !this._update) {
+    if (
+      !this._select && !this._insert && !this._create && !this._update &&
+      !this._delete
+    ) {
       throw new Error("Empty query");
     }
 
@@ -221,6 +242,10 @@ export class QueryBuilder {
 
     if (this._update && !this._where) {
       throw new Error("update() called but not where()");
+    }
+
+    if (this._delete && (!this._from && !this._where)) {
+      throw new Error("delete() called but not from() or where()");
     }
   }
 
@@ -261,4 +286,8 @@ interface QueryBuilderAfterUpdate {
   where: (condition: WhereCondition) => QueryBuilderAfterWhere;
   toText: () => PreparedQueryText;
   execute: <T>() => Promise<T[]>;
+}
+
+interface QueryBuilderAfterDelete {
+  from: (...tables: string[]) => QueryBuilderAfterFrom;
 }

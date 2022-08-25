@@ -1,4 +1,4 @@
-import { assertEquals } from "https://deno.land/std@0.141.0/testing/asserts.ts";
+import { assertEquals } from "../deps.ts";
 import { QueryBuilder } from "../src/query/query-builder.ts";
 
 const databaseUrl = Deno.env.get("DATABASE_URL") || "";
@@ -97,9 +97,9 @@ Deno.test("Update single field", async () => {
       .execute();
 
     await builder
-      .update("test", { field: "wine_id", value: 3})
-      .where({field: "comment", equals: "Hi mom!"})
-      .execute()
+      .update("test", { field: "wine_id", value: 3 })
+      .where({ field: "comment", equals: "Hi mom!" })
+      .execute();
 
     const actual = await builder
       .select("wine_id")
@@ -108,6 +108,32 @@ Deno.test("Update single field", async () => {
       .execute();
 
     assertEquals(actual, [{ wine_id: 3 }]);
+  });
+});
+
+Deno.test("Delete single row", async () => {
+  await withDatabase(async () => {
+    await builder
+      .insert("test", [
+        { wine_id: 1, comment: "Hi mom!" },
+        { wine_id: 2, comment: `A 'weird" one '' héhé` },
+      ])
+      .execute();
+
+    await builder
+      .delete()
+      .from("test")
+      .where({ field: "comment", equals: "Hi mom!" })
+      .execute();
+
+    console.log(builder);
+
+    const actual = await builder
+      .select("*")
+      .from("test")
+      .execute();
+
+    assertEquals(actual.length, 1);
   });
 });
 

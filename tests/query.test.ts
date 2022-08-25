@@ -1,6 +1,7 @@
 import { assertEquals } from "../deps.ts";
 import { Nullable } from "../src/orm/annotations.ts";
 import { Create, Field } from "../src/query/create.ts";
+import { Delete } from "../src/query/delete.ts";
 import { From } from "../src/query/from.ts";
 import { Insert } from "../src/query/insert.ts";
 import { QueryBuilder } from "../src/query/query-builder.ts";
@@ -162,6 +163,11 @@ Deno.test("Update, single value", () => {
   assertEquals(actual, "UPDATE wine SET comment = $1");
 });
 
+Deno.test("Delete", () => {
+  const del = new Delete();
+  assertEquals(del.toText().text, "DELETE");
+});
+
 // Building blocks
 Deno.test("Select + From, single values", () => {
   const query = builder
@@ -208,4 +214,19 @@ Deno.test("Update + Where, single value", () => {
     "UPDATE wine SET comment = $1 WHERE wine_id = $2 AND comment = $3;",
   );
   assertEquals(args, ["Hey", 1, "Hi mom!"]);
+});
+
+Deno.test("Delete + From + Where, single value", () => {
+  const { text, args } = builder
+    .delete()
+    .from("wine")
+    .where({ field: "wine_id", equals: 1 })
+    .and({ field: "comment", equals: "Hi mom!" })
+    .toText();
+
+  assertEquals(
+    text,
+    "DELETE FROM wine WHERE wine_id = $1 AND comment = $2;",
+  );
+  assertEquals(args, [1, "Hi mom!"]);
 });
