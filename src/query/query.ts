@@ -1,5 +1,6 @@
 export interface QueryText {
   text: string;
+  affectedTables?: string[]
 }
 
 export interface PreparedQueryText extends QueryText {

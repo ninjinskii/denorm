@@ -1,5 +1,5 @@
 import { Nullable } from "../orm/annotations.ts";
-import { QueryPart, QueryText, TableSelector } from "./query.ts";
+import { QueryPart, QueryText } from "./query.ts";
 import { FieldTransformer } from "./query-builder.ts";
 
 export interface Field {
@@ -31,7 +31,7 @@ export enum SizeableType {
   "CHAR",
 }
 
-export class Create extends QueryPart implements TableSelector {
+export class Create extends QueryPart {
   private transformer: FieldTransformer | null;
   private tableName: string;
   private fields: Field[];
@@ -68,10 +68,6 @@ export class Create extends QueryPart implements TableSelector {
     }
 
     const text = `${start}${fieldsText.join(", ")}${end}`;
-    return { text };
-  }
-
-  getAffectedTables(): string[] {
-    return [this.tableName];
+    return { text, affectedTables: [this.tableName] };
   }
 }
