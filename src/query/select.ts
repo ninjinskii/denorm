@@ -6,6 +6,10 @@ export class Select extends QueryPart {
   constructor(...projection: string[]) {
     super();
     this.projection = projection;
+
+    if (projection.length === 0) {
+      throw Error("Cannot perform empty SELECT query")
+    }
   }
 
   toText(): QueryText {

@@ -87,6 +87,30 @@ Deno.test("Where single condition", async () => {
   });
 });
 
+Deno.test("Update single field", async () => {
+  await withDatabase(async () => {
+    await builder
+      .insert("test", [
+        { wine_id: 1, comment: "Hi mom!" },
+        { wine_id: 2, comment: `A 'weird" one '' héhé` },
+      ])
+      .execute();
+
+    await builder
+      .update("test", { field: "wine_id", value: 3})
+      .where({field: "comment", equals: "Hi mom!"})
+      .execute()
+
+    const actual = await builder
+      .select("wine_id")
+      .from("test")
+      .where({ field: "comment", equals: "Hi mom!" })
+      .execute();
+
+    assertEquals(actual, [{ wine_id: 3 }]);
+  });
+});
+
 async function withDatabase(block: () => Promise<void>) {
   await builder["executor"]["init"]();
   await builder["executor"]["client"]?.queryObject(

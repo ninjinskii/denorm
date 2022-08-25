@@ -23,6 +23,7 @@ export interface InternalWhereCondition {
 export class Where extends QueryPart {
   private conditions: WhereCondition[] = [];
   private combinedOnly = false;
+  private argsOffset = 0;
 
   constructor(condition?: WhereCondition) {
     super();
@@ -34,12 +35,16 @@ export class Where extends QueryPart {
     }
   }
 
+  setPreparedArgsOffset(offset: number) {
+    this.argsOffset = offset;
+  }
+
   toText(): PreparedQueryText {
     const args = [];
     let text = "WHERE ";
     let inChain = false;
     let firstLoop = true;
-    let preparedArgsCounter = 1;
+    let preparedArgsCounter = 1 + this.argsOffset;
 
     for (const condition of this.conditions as InternalWhereCondition[]) {
       let operator = "";

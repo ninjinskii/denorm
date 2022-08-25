@@ -5,6 +5,7 @@ import { From } from "../src/query/from.ts";
 import { Insert } from "../src/query/insert.ts";
 import { QueryBuilder } from "../src/query/query-builder.ts";
 import { Select } from "../src/query/select.ts";
+import { Update } from "../src/query/update.ts";
 import { Where } from "../src/query/where.ts";
 
 const databaseUrl = Deno.env.get("DATABASE_URL") || "";
@@ -147,6 +148,20 @@ Deno.test("Create table", () => {
   );
 });
 
+Deno.test("Update, single value", () => {
+  const update = new Update("wine", [{ field: "id", value: 1 }]);
+  const actual = update.toText().text;
+
+  assertEquals(actual, "UPDATE wine SET id = $1");
+});
+
+Deno.test("Update, single value", () => {
+  const update = new Update("wine", [{ field: "comment", value: "Hi mom!" }]);
+  const actual = update.toText().text;
+
+  assertEquals(actual, "UPDATE wine SET comment = $1");
+});
+
 // Building blocks
 Deno.test("Select + From, single values", () => {
   const query = builder
@@ -179,4 +194,18 @@ Deno.test("Select + From + Where, multiple values", () => {
     "SELECT wine_id, comment FROM wine, bottle WHERE wine_id = $1 AND comment = $2;",
   );
   assertEquals(args, [1, "Hi mom!"]);
+});
+
+Deno.test("Update + Where, single value", () => {
+  const { text, args } = builder
+    .update("wine", { field: "comment", value: "Hey" })
+    .where({ field: "wine_id", equals: 1 })
+    .and({ field: "comment", equals: "Hi mom!" })
+    .toText();
+
+  assertEquals(
+    text,
+    "UPDATE wine SET comment = $1 WHERE wine_id = $2 AND comment = $3;",
+  );
+  assertEquals(args, ["Hey", 1, "Hi mom!"]);
 });
