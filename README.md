@@ -9,10 +9,16 @@ Only 2 deps:
 * https://deno.land/std@0.137.0/testing/asserts.ts;
 
 ## Usage
+You can use this library as an ORM or simply as a query builder if you don't need to do a lot of data objects manipulation.
+
 ### ORM
-If you want to do an automatic mapping between you're model objects and your database fields, you'll have to annotate your classes.
+If you want to do an automatic mapping between your model objects and your database fields, you'll have to annotate your classes.
 You are not forced to do this if you already have a running production database and your server doesn't need to modify objects
-a lot when coming out of the databse (e.g. in a REST api).
+a lot when coming out of the databse (e.g. in a REST api). You wouldn't event need to create the model objects.
+
+<b>What you will need for the ORM</b>
+* Add decorators to your model class
+* Call `initTable()` before instanting any of the model classes (or referencing their types)
 
 Here is an example:
 
@@ -24,43 +30,73 @@ export class MyModel {
     @Field("VARCHAR") public name: string,
     @SizedField("VARCHAR", 255) public comment: string,
     @Field("VARCHAR", NULLABLE.YES) public nullableProperty: string | null,
-    @Field("BOOL", NULLABLE.NO, "my_field") public alias: string | null,
+    @Field("BOOL", NULLABLE.NO, "my_field") public alias: string,
   ) {}
 }
 ```
 
-```ts
-* @Entity(tableName: string) - Will mark your class to be mapped in your DB, bearing the provided name.
-* @PrimaryKey(type: string, as?: string) - Will mark the property as your primary key with the provided type. If set, `as` your field will take that name in the database.
-* @Field(type: string, nullable?: NULLABLE, as?: string) - Will mark the property as a standard field, with the provided type.
-* @SizedField(type: string, size?: int, nullable?: NULLABLE, as?: string) - Will mark the property as a standard field, with the provided type and size (e.g; VARCHAR(255)).
+```
+@Entity(tableName: string) - Will mark your class to be mapped in your DB, bearing the provided name.
+@PrimaryKey(type: string, as?: string) - Will mark the property as your primary key with the provided type. If set, `as` your field will take that name in the database.
+@Field(type: string, nullable?: NULLABLE, as?: string) - Will mark the property as a standard field, with the provided type.
+@SizedField(type: string, size?: int, nullable?: NULLABLE, as?: string) - Will mark the property as a standard field, with the provided type and size (e.g; VARCHAR(255)).
 ```
 
-### SELECT clause
-soon
 
-### FROM clause
-soon
-
-### WHERE clause
-For a simple where, you can do as follow:
-
+Then you'll need to init the tables like so:
+<b>IMPORTANT NOTE:</b>
+Run `initTables()` before trying to instantiate any of you're model objects or even referencing the type, as it will break the annotation system.
 ```ts
-  new Where({ field: "hello", equals: "hi"})
-  new Where({ field: "hello", equals: "hi"}).and({ field: "age", inf: 5})
-  new Where({ field: "hello", equals: "hi"}).or({ field: "age", inf: 5})
+await initTables(databaseUrl, [MyModel, MyOtherModel])
 ```
 
-To simulate parenthesis around some AND 'or clause, you can pass nothing to the Where constructor
-and use .and() & .or() using arrays. An array of and() will be placed inside parenthese
+### Query the database
+Otherwise, you can use only the query builder part.
+You don't need to setup the decorators and call `initTables()` if your database already exists.
+
+```ts
+// Select
+const builder = new QueryBuilder(databaseUrl);
+const select = await builder
+      .select("*") // .select("field1", "field2") - .select("table1.field1", "table_2.field2")
+      .from("table1") // .from("table1", "table2")
+      .where({ field: "comment", equals: "Hi mom!" }) // { field: "comment", equals: "whatever", chain: true } - Chain will couple the next AND & OR operator
+      .or({ field: "count", sup: 5})
+      .execute()
+      
+// Insert
+// Note that you can reuse the same builder instance after calling execute()
+await builder
+      .insert("table1", [
+        { id: 1, comment: "" },
+        { id: 2, comment: "" },
+      ])
+      .execute();
+      
+      
+// Update
+await builder
+      .update("table1", { field: "id", value: 3 })
+      .where({ field: "id", equals: 1 })
+      .execute();
+```
+
+To simulate parenthesis around some AND or OR clause, you can pass nothing to the `where()` function
+and use `and()` & `or()` using arrays. An array of `and()` will be placed inside parenthese
 
 ```ts
   // WHERE (hello = hi AND age < 5)
-  new Where().and([{ field: "hello", equals: "hi"}, { field: "age", inf: 5}])
+  ...
+  where().and([{ field: "hello", equals: "hi"}, { field: "age", inf: 5}])
   // WHERE (hello = hi AND age < 5) OR age > 30 OR age = 32
-  new Where().and([{ field: "hello", equals: "hi"}, { field: "age", inf: 5}])
+  where().and([{ field: "hello", equals: "hi"}, { field: "age", inf: 5}])
       .or({field: "age", sup: 30})
       .or({field: "age", equals: 32})
+```
+
+## Run the project locally
+```bash
+docker-compose up -d
 ```
 
 ## Run tests
