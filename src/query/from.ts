@@ -1,6 +1,6 @@
-import { QueryPart, QueryText } from "./query.ts";
+import { QueryPart, QueryText, TableSelector } from "./query.ts";
 
-export class From extends QueryPart {
+export class From extends QueryPart implements TableSelector {
   private readonly tables: string[];
 
   constructor(...tables: string[]) {
@@ -11,5 +11,9 @@ export class From extends QueryPart {
   toText(): QueryText {
     const formattedTables = this.tables.join(", ");
     return { text: `FROM ${formattedTables}` };
+  }
+
+  getAffectedTables(): string[] {
+    return this.tables;
   }
 }

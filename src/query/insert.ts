@@ -1,6 +1,6 @@
 // We will work a lot with any since we're trying to be as generic as possible to insert anything in the db.
 // deno-lint-ignore-file no-explicit-any
-import { QueryPart, PreparedQueryText } from "./query.ts";
+import { PreparedQueryText, QueryPart, TableSelector } from "./query.ts";
 import { FieldTransformer } from "./query-builder.ts";
 
 interface InsertValues {
@@ -8,7 +8,7 @@ interface InsertValues {
   preparedValues: string;
 }
 
-export class Insert extends QueryPart {
+export class Insert extends QueryPart implements TableSelector {
   private transformer: FieldTransformer | null;
   private tableName: string;
   private objects: any[];
@@ -69,5 +69,9 @@ export class Insert extends QueryPart {
 
     const preparedValues = preparedValuesArray.join(", ");
     return { values, preparedValues };
+  }
+
+  getAffectedTables(): string[] {
+    return [this.tableName];
   }
 }
