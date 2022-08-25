@@ -146,7 +146,7 @@ Deno.test("Create table", () => {
     { name: "tasting_id", type: "INT", nullable: Nullable.YES },
   ];
 
-  const create = new Create(transformer, "wine", fields);
+  const create = new Create("wine", fields);
   const actual = create.toText().text;
 
   assertEquals(

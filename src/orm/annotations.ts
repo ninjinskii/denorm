@@ -62,7 +62,7 @@ export async function initTables(databaseUrl: string, _types: any[]) {
       fieldByTable.push([]); // This empty array is a slot for next fields of this new table
     } else if (table) {
       const actualField = field as Field;
-      updateAliasTracker(actualField, table)
+      updateAliasTracker(actualField, table);
       lastOf(fieldByTable)?.push(field as Field);
     }
   }
@@ -76,12 +76,7 @@ export async function initTables(databaseUrl: string, _types: any[]) {
 
   for (const [index, fields] of fieldByTable.entries()) {
     const tableName = tableNames[index];
-    const query = new Create(
-      { toDbField: (a) => a, fromDbField: (a) => a },
-      tableName,
-      fields,
-    ).toText();
-
+    const query = new Create(tableName, fields).toText();
     await executor.submitQuery(query);
   }
 

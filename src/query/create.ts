@@ -1,6 +1,5 @@
 import { Nullable } from "../orm/annotations.ts";
 import { QueryPart, QueryText } from "./query.ts";
-import { FieldTransformer } from "./query-builder.ts";
 
 export interface Field {
   type: Type;
@@ -32,17 +31,11 @@ export enum SizeableType {
 }
 
 export class Create extends QueryPart {
-  private transformer: FieldTransformer | null;
   private tableName: string;
   private fields: Field[];
 
-  constructor(
-    transformer: FieldTransformer | null,
-    tableName: string,
-    fields: Field[],
-  ) {
+  constructor(tableName: string, fields: Field[]) {
     super();
-    this.transformer = transformer;
     this.tableName = tableName;
     this.fields = fields;
 
