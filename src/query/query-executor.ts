@@ -2,6 +2,7 @@ import { QueryObjectResult } from "https://deno.land/x/postgres@v0.16.1/query/qu
 import { Client, Transaction } from "../../deps.ts";
 import { QueryText } from "./query.ts";
 import { FieldTransformer } from "./query-builder.ts";
+import { aliasTracker } from "../orm/annotations.ts";
 
 export class QueryExecutor {
   private client: Client | null = null;
@@ -30,7 +31,10 @@ export class QueryExecutor {
     return this.client !== null;
   }
 
-  async submitQuery<T>(query: QueryText): Promise<T[]> {
+  async submitQuery<T>(
+    query: QueryText,
+    affectedTables?: string[],
+  ): Promise<T[]> {
     await this.healthCheck();
     const client = this.client as Client;
     const result = await client.queryObject<QueryObjectResult<T>>({
@@ -38,15 +42,22 @@ export class QueryExecutor {
       camelcase: this.useNativeCamel,
     });
 
-    console.log(result)
+    console.log(result);
 
     return (this.useNativeCamel
       ? result.rows
       : this.maybeRenameKeys(result)) as unknown as T[];
   }
 
-  private maybeRenameKeys<T>(queryResult: QueryObjectResult<T>): T[] {
-    if (!this.transformer) {
+  private maybeRenameKeys<T>(
+    queryResult: QueryObjectResult<T>,
+    affectedTables?: string[],
+  ): T[] {
+    const shouldRenameKeys = Object.keys(aliasTracker).length &&
+      queryResult.command === "SELECT" &&
+      affectedTables;
+
+    if (!shouldRenameKeys) {
       return queryResult as unknown as T[];
     }
 
@@ -56,7 +67,8 @@ export class QueryExecutor {
       const o = object as never;
 
       for (const key of Object.keys(o)) {
-        const renamedKey = this.transformer.fromDbField(key);
+        // TODO: get tables from select queries
+        const renamedKey = aliasTracker["table"][key];
         delete Object.assign(o, { [renamedKey]: o[key] })[key];
       }
 
