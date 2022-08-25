@@ -32,7 +32,7 @@ export class QueryBuilder {
   }
 
   select(...fields: string[]): QueryBuilderAfterSelect {
-    this._select = new Select(this.transformer, ...fields);
+    this._select = new Select(...fields);
     return this;
   }
 

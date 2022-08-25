@@ -31,10 +31,7 @@ export class QueryExecutor {
     return this.client !== null;
   }
 
-  async submitQuery<T>(
-    query: QueryText,
-    affectedTables?: string[],
-  ): Promise<T[]> {
+  async submitQuery<T>(query: QueryText): Promise<T[]> {
     await this.healthCheck();
     const client = this.client as Client;
     const result = await client.queryObject<QueryObjectResult<T>>({
@@ -42,34 +39,43 @@ export class QueryExecutor {
       camelcase: this.useNativeCamel,
     });
 
-    console.log(result);
-
     return (this.useNativeCamel
       ? result.rows
-      : this.maybeRenameKeys(result)) as unknown as T[];
+      : this.maybeRenameKeys(query, result)) as unknown as T[];
   }
 
   private maybeRenameKeys<T>(
+    query: QueryText,
     queryResult: QueryObjectResult<T>,
-    affectedTables?: string[],
   ): T[] {
     const shouldRenameKeys = Object.keys(aliasTracker).length &&
       queryResult.command === "SELECT" &&
-      affectedTables;
+      query.affectedTables;
 
     if (!shouldRenameKeys) {
       return queryResult as unknown as T[];
     }
 
+    const tables = query.affectedTables as string[];
     const objects = [];
 
     for (const object of queryResult.rows) {
       const o = object as never;
 
       for (const key of Object.keys(o)) {
-        // TODO: get tables from select queries
-        const renamedKey = aliasTracker["table"][key];
-        delete Object.assign(o, { [renamedKey]: o[key] })[key];
+        if (tables.length === 1) {
+          const renamedKey = aliasTracker[tables[0]][key];
+          delete Object.assign(o, { [renamedKey]: o[key] })[key];
+        } else if (tables.length > 1 && query.tableFields) {
+          const table = query.tableFields.find((tableField) =>
+            tableField.field === key
+          )?.table;
+
+          if (table) {
+            const renamedKey = aliasTracker[table][key];
+            delete Object.assign(o, { [renamedKey]: o[key] })[key];
+          }
+        }
       }
 
       objects.push(object);

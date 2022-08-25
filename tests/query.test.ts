@@ -19,19 +19,19 @@ const builder = new QueryBuilder(
 );
 
 Deno.test("Select all", () => {
-  const select = new Select(transformer, "*").toText().text;
+  const select = new Select("*").toText().text;
   assertEquals(select, "SELECT *");
 });
 
 Deno.test("Select single field", () => {
-  const select = new Select(transformer, "wineId").toText().text;
+  const select = new Select("wine_id").toText().text;
   assertEquals(select, "SELECT wine_id");
 });
 
 Deno.test("Select multiple fields", () => {
-  const select = new Select(transformer, "wineId", "comment", "tastingId")
+  const select = new Select("wine_id", "comment", "tasting_id")
     .toText().text;
-  assertEquals(select, "SELECT wine_id,comment,tasting_id");
+  assertEquals(select, "SELECT wine_id, comment, tasting_id");
 });
 
 Deno.test("From single table", () => {
@@ -45,7 +45,7 @@ Deno.test("From multiple tables", () => {
 });
 
 Deno.test("Where single equals int", () => {
-  const conditions = { field: "wineId", equals: 1 };
+  const conditions = { field: "wine_id", equals: 1 };
   const { text, args } = new Where(transformer, conditions).toText();
 
   assertEquals(text, "WHERE wine_id = $1");
@@ -167,24 +167,24 @@ Deno.test("Select + From, single values", () => {
 
 Deno.test("Select + From, multiple values", () => {
   const query = builder
-    .select("wineId", "comment")
+    .select("wine_id", "comment")
     .from("wine", "bottle")
     .toText().text;
 
-  assertEquals(query, "SELECT wine_id,comment FROM wine, bottle;");
+  assertEquals(query, "SELECT wine_id, comment FROM wine, bottle;");
 });
 
 Deno.test("Select + From + Where, multiple values", () => {
   const { text, args } = builder
-    .select("wineId", "comment")
+    .select("wine_id", "comment")
     .from("wine", "bottle")
-    .where({ field: "wineId", equals: 1 })
+    .where({ field: "wine_id", equals: 1 })
     .and({ field: "comment", equals: "Hi mom!" })
     .toText();
 
   assertEquals(
     text,
-    "SELECT wine_id,comment FROM wine, bottle WHERE wine_id = $1 AND comment = $2;",
+    "SELECT wine_id, comment FROM wine, bottle WHERE wine_id = $1 AND comment = $2;",
   );
   assertEquals(args, [1, "Hi mom!"]);
 });
