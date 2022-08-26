@@ -34,6 +34,12 @@ export async function initTables(databaseUrl: string, _types: any[]) {
   // and describing fake parameters (e.g new Wine("", "", 1, ""))
   // to comply with TS type checks
 
+  fields.length = 0 // Reset array
+
+  for (const key in aliasTracker) {
+      delete aliasTracker[key]; // Reset tracker
+  }
+
   const executor = new QueryExecutor(databaseUrl);
   await executor["init"]();
 
@@ -94,6 +100,8 @@ function updateAliasTracker(field: Field, table: string) {
 
 export function Entity(tableName: string) {
   return function (_constructor: Function) {
+    console.log("Running entity");
+    console.warn("Running entity");
     fields.unshift({ tableName });
   };
 }

@@ -8,6 +8,8 @@ const databaseUrl = Deno.env.get("DATABASE_URL") || "";
 const builder = new QueryBuilder(databaseUrl);
 
 Deno.test("Create single table", async () => {
+  console.log("Running a test in annotations");
+  console.warn("Running a test in annotations");
   await withDatabase(async () => {
     await dropTables();
     await initTables(databaseUrl, [Wine]);
