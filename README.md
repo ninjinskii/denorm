@@ -12,7 +12,7 @@ You can use this library as an ORM or simply as a query builder if you don't nee
 
 ### ORM
 If you want to do an automatic mapping between your model objects and your database fields, you'll have to annotate your classes.
-You are not forced to do this if you already have a running production database and your server doesn't need to modify objects
+You __are not__ forced to do this if you already have a running production database and your server doesn't need to modify objects
 a lot when coming out of the databse (e.g. in a REST api). You wouldn't event need to create the model objects.
 
 <b>What you will need for the ORM</b>
@@ -44,7 +44,7 @@ export class MyModel {
 
 Then you'll need to init the tables like so:  
 
-__IMPORTANT NOTE:__
+> __IMPORTANT NOTE:__
 Run `initTables()` before trying to instantiate any of your model objects or even referencing the type, as it will break the annotation system.
 ```ts
 await initTables(databaseUrl, [MyModel, MyOtherModel])
@@ -76,9 +76,14 @@ await builder
       
 // Update
 await builder
-      .update("table1", { field: "id", value: 3 })
+      .update("table1", { field: "id", value: 3 }, { field: "name", value: "hello" })
       .where({ field: "id", equals: 1 })
       .execute();
+      
+// Delete
+await builder
+      .delete()
+      .from("table_1")
 ```
 
 To simulate parenthesis around some AND or OR clause, you can pass nothing to the `where()` function
