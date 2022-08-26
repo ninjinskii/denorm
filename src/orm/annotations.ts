@@ -34,12 +34,6 @@ export async function initTables(databaseUrl: string, _types: any[]) {
   // and describing fake parameters (e.g new Wine("", "", 1, ""))
   // to comply with TS type checks
 
-  fields.length = 0 // Reset array
-
-  for (const key in aliasTracker) {
-      delete aliasTracker[key]; // Reset tracker
-  }
-
   const executor = new QueryExecutor(databaseUrl);
   await executor["init"]();
 
