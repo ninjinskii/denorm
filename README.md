@@ -22,6 +22,8 @@ a lot when coming out of the databse (e.g. in a REST api). You wouldn't event ne
 Here is an example:
 
 ```ts
+import { Entity... } from "https://raw.githubusercontent.com/ninjinskii/denorm/master/mod.ts"
+
 @Entity("my_model")
 export class MyModel {
   constructor(
@@ -47,6 +49,8 @@ Then you'll need to init the tables like so:
 > __IMPORTANT NOTE:__
 Run `initTables()` before trying to instantiate any of your model objects or even referencing the type, as it will break the annotation system.
 ```ts
+import { initTables } from "https://raw.githubusercontent.com/ninjinskii/denorm/master/mod.ts"
+
 await initTables(databaseUrl, [MyModel, MyOtherModel])
 ```
 
@@ -55,6 +59,8 @@ Otherwise, you can use only the query builder part.
 You don't need to setup the decorators and call `initTables()` if your database already exists.
 
 ```ts
+import { QueryBuilder } from "https://raw.githubusercontent.com/ninjinskii/denorm/master/mod.ts"
+
 // Select
 const builder = new QueryBuilder(databaseUrl);
 const select = await builder
@@ -97,6 +103,15 @@ and use `and()` & `or()` using arrays. An array of `and()` will be placed inside
   where().and([{ field: "hello", equals: "hi"}, { field: "age", inf: 5}])
       .or({field: "age", sup: 30})
       .or({field: "age", equals: 32})
+```
+
+### Transactions
+```ts
+import { QueryBuilder, transaction } from "https://raw.githubusercontent.com/ninjinskii/denorm/master/mod.ts"
+
+const success: boolean = await transaction(builder, async() => {
+  // Do your transaction queries here
+})
 ```
 
 ## Run the project locally
