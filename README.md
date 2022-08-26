@@ -82,7 +82,7 @@ await builder
       
 // Update
 await builder
-      .update("table1", { field: "id", value: 3 }, { field: "name", value: "hello" })
+      .update("table1", { id: 3, name: "hello" })
       .where({ field: "id", equals: 1 })
       .execute();
       
