@@ -34,6 +34,9 @@ export async function initTables(databaseUrl: string, _types: any[]) {
   // and describing fake parameters (e.g new Wine("", "", 1, ""))
   // to comply with TS type checks
 
+  console.log(fields)
+  console.log(aliasTracker)
+
   const executor = new QueryExecutor(databaseUrl);
   await executor["init"]();
 
