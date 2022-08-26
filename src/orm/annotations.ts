@@ -97,8 +97,7 @@ function updateAliasTracker(field: Field, table: string) {
 
 export function Entity(tableName: string) {
   return function (_constructor: Function) {
-    console.log("Running entity");
-    console.warn("Running entity");
+    console.log(`Running entity ${tableName}`);
     fields.unshift({ tableName });
   };
 }
