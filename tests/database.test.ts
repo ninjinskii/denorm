@@ -1,6 +1,6 @@
 import { assertEquals } from "../deps.ts";
 import { QueryBuilder } from "../src/query/query-builder.ts";
-import transaction from "../src/transaction/transaction.ts";
+import { transaction } from "../src/transaction/transaction.ts";
 
 const databaseUrl = Deno.env.get("DATABASE_URL") || "";
 const builder = new QueryBuilder(databaseUrl);
@@ -12,152 +12,152 @@ const builder = new QueryBuilder(databaseUrl);
 // Check annotations.test.ts to see properties named like
 // the original object.
 
-// Deno.test("Insert single values, first result only", async () => {
-//   await withDatabase(async () => {
-//     await builder
-//       .insert("test", [
-//         { wine_id: 1, comment: "Hi mom!" },
-//       ])
-//       .execute();
+Deno.test("Insert single values, first result only", async () => {
+  await withDatabase(async () => {
+    await builder
+      .insert("test", [
+        { wine_id: 1, comment: "Hi mom!" },
+      ])
+      .execute();
 
-//     const actual = await builder
-//       .select("*")
-//       .from("test")
-//       .executeAndGetFirst();
+    const actual = await builder
+      .select("*")
+      .from("test")
+      .executeAndGetFirst();
 
-//     assertEquals(actual, { wine_id: 1, comment: "Hi mom!" });
-//   });
-// });
+    assertEquals(actual, { wine_id: 1, comment: "Hi mom!" });
+  });
+});
 
-// Deno.test("Insert multiple values", async () => {
-//   await withDatabase(async () => {
-//     await builder
-//       .insert("test", [
-//         { wine_id: 1, comment: "Hi mom!" },
-//         { wine_id: 2, comment: `A 'weird" one '' héhé` },
-//       ])
-//       .execute();
+Deno.test("Insert multiple values", async () => {
+  await withDatabase(async () => {
+    await builder
+      .insert("test", [
+        { wine_id: 1, comment: "Hi mom!" },
+        { wine_id: 2, comment: `A 'weird" one '' héhé` },
+      ])
+      .execute();
 
-//     const actual = await builder
-//       .select("*")
-//       .from("test")
-//       .execute();
+    const actual = await builder
+      .select("*")
+      .from("test")
+      .execute();
 
-//     assertEquals(actual, [
-//       { wine_id: 1, comment: "Hi mom!" },
-//       { wine_id: 2, comment: `A 'weird" one '' héhé` },
-//     ]);
-//   });
-// });
+    assertEquals(actual, [
+      { wine_id: 1, comment: "Hi mom!" },
+      { wine_id: 2, comment: `A 'weird" one '' héhé` },
+    ]);
+  });
+});
 
-// Deno.test("Select, but on multiple tables", async () => {
-//   await withDatabase(async () => {
-//     await builder
-//       .insert("test", [{ wine_id: 1, comment: "Hi mom!" }])
-//       .execute();
+Deno.test("Select, but on multiple tables", async () => {
+  await withDatabase(async () => {
+    await builder
+      .insert("test", [{ wine_id: 1, comment: "Hi mom!" }])
+      .execute();
 
-//     await builder
-//       .insert("test_2", [{ bottle_id: 1, bottle_size: "Large" }])
-//       .execute();
+    await builder
+      .insert("test_2", [{ bottle_id: 1, bottle_size: "Large" }])
+      .execute();
 
-//     const actual = await builder
-//       .select("test_2.bottle_size", "test.comment")
-//       .from("test", "test_2")
-//       .execute();
+    const actual = await builder
+      .select("test_2.bottle_size", "test.comment")
+      .from("test", "test_2")
+      .execute();
 
-//     assertEquals(actual, [{ bottle_size: "Large", comment: "Hi mom!" }]);
-//   });
-// });
+    assertEquals(actual, [{ bottle_size: "Large", comment: "Hi mom!" }]);
+  });
+});
 
-// Deno.test("Where single condition", async () => {
-//   await withDatabase(async () => {
-//     await builder
-//       .insert("test", [
-//         { wine_id: 1, comment: "Hi mom!" },
-//         { wine_id: 2, comment: `A 'weird" one '' héhé` },
-//       ])
-//       .execute();
+Deno.test("Where single condition", async () => {
+  await withDatabase(async () => {
+    await builder
+      .insert("test", [
+        { wine_id: 1, comment: "Hi mom!" },
+        { wine_id: 2, comment: `A 'weird" one '' héhé` },
+      ])
+      .execute();
 
-//     const actual = await builder
-//       .select("wine_id")
-//       .from("test")
-//       .where({ field: "comment", equals: "Hi mom!" })
-//       .execute();
+    const actual = await builder
+      .select("wine_id")
+      .from("test")
+      .where({ field: "comment", equals: "Hi mom!" })
+      .execute();
 
-//     assertEquals(actual, [{ wine_id: 1 }]);
-//   });
-// });
+    assertEquals(actual, [{ wine_id: 1 }]);
+  });
+});
 
-// Deno.test("Update single field", async () => {
-//   await withDatabase(async () => {
-//     await builder
-//       .insert("test", [
-//         { wine_id: 1, comment: "Hi mom!" },
-//         { wine_id: 2, comment: `A 'weird" one '' héhé` },
-//       ])
-//       .execute();
+Deno.test("Update single field", async () => {
+  await withDatabase(async () => {
+    await builder
+      .insert("test", [
+        { wine_id: 1, comment: "Hi mom!" },
+        { wine_id: 2, comment: `A 'weird" one '' héhé` },
+      ])
+      .execute();
 
-//     await builder
-//       .update("test", { field: "wine_id", value: 3 })
-//       .where({ field: "comment", equals: "Hi mom!" })
-//       .execute();
+    await builder
+      .update("test", { field: "wine_id", value: 3 })
+      .where({ field: "comment", equals: "Hi mom!" })
+      .execute();
 
-//     const actual = await builder
-//       .select("wine_id")
-//       .from("test")
-//       .where({ field: "comment", equals: "Hi mom!" })
-//       .execute();
+    const actual = await builder
+      .select("wine_id")
+      .from("test")
+      .where({ field: "comment", equals: "Hi mom!" })
+      .execute();
 
-//     assertEquals(actual, [{ wine_id: 3 }]);
-//   });
-// });
+    assertEquals(actual, [{ wine_id: 3 }]);
+  });
+});
 
-// Deno.test("Delete single row", async () => {
-//   await withDatabase(async () => {
-//     await builder
-//       .insert("test", [
-//         { wine_id: 1, comment: "Hi mom!" },
-//         { wine_id: 2, comment: `A 'weird" one '' héhé` },
-//       ])
-//       .execute();
+Deno.test("Delete single row", async () => {
+  await withDatabase(async () => {
+    await builder
+      .insert("test", [
+        { wine_id: 1, comment: "Hi mom!" },
+        { wine_id: 2, comment: `A 'weird" one '' héhé` },
+      ])
+      .execute();
 
-//     await builder
-//       .delete()
-//       .from("test")
-//       .where({ field: "comment", equals: "Hi mom!" })
-//       .execute();
+    await builder
+      .delete()
+      .from("test")
+      .where({ field: "comment", equals: "Hi mom!" })
+      .execute();
 
-//     const actual = await builder
-//       .select("*")
-//       .from("test")
-//       .execute();
+    const actual = await builder
+      .select("*")
+      .from("test")
+      .execute();
 
-//     assertEquals(actual.length, 1);
-//   });
-// });
+    assertEquals(actual.length, 1);
+  });
+});
 
-// Deno.test("Transaction fail", async () => {
-//   await withDatabase(async () => {
-//     const ok = await transaction(builder, async () => {
-//       await builder["executor"]["client"]?.queryObject("DELETE FROM test");
-//       await builder
-//         .insert("test", [{ wine_id: 1, comment: "Hi mom!" }])
-//         .execute();
+Deno.test("Transaction fail", async () => {
+  await withDatabase(async () => {
+    const ok = await transaction(builder, async () => {
+      await builder["executor"]["client"]?.queryObject("DELETE FROM test");
+      await builder
+        .insert("test", [{ wine_id: 1, comment: "Hi mom!" }])
+        .execute();
 
-//       // Run a invalid query to make the transaction fail.
-//       await builder["executor"]["client"]?.queryObject("SELECT []");
-//     });
+      // Run a invalid query to make the transaction fail.
+      await builder["executor"]["client"]?.queryObject("SELECT []");
+    });
 
-//     const actual = await builder
-//       .select("*")
-//       .from("test")
-//       .execute();
+    const actual = await builder
+      .select("*")
+      .from("test")
+      .execute();
 
-//     assertEquals(actual.length, 0);
-//     assertEquals(ok, false);
-//     assertEquals(builder["executor"]["transaction"], null);
-//   });
-// });
+    assertEquals(actual.length, 0);
+    assertEquals(ok, false);
+    assertEquals(builder["executor"]["transaction"], null);
+  });
+});
 
 Deno.test("Transaction", async () => {
   await withDatabase(async () => {
