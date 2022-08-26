@@ -279,6 +279,7 @@ interface QueryBuilderAfterWhere {
   or: (condition: WhereCondition | WhereCondition[]) => QueryBuilderAfterWhere;
   toText: () => PreparedQueryText;
   execute: <T>() => Promise<T[]>;
+  executeAndGetFirst: <T>() => Promise<T>;
 }
 
 interface QueryBuilderAfterInsert {
