@@ -1,6 +1,5 @@
 # DenORM
-Depedency-limited Deno ORM for PostgreSQL
-Allow you to build relativly simple queries.
+Depedency-limited Deno ORM for PostgreSQL. Allow you to build relativly simple queries.
 
 Low chance to let you down in production because of unavailable depedencies.
 
@@ -43,9 +42,10 @@ export class MyModel {
 ```
 
 
-Then you'll need to init the tables like so:
-<b>IMPORTANT NOTE:</b>
-Run `initTables()` before trying to instantiate any of you're model objects or even referencing the type, as it will break the annotation system.
+Then you'll need to init the tables like so:  
+
+__IMPORTANT NOTE:__
+Run `initTables()` before trying to instantiate any of your model objects or even referencing the type, as it will break the annotation system.
 ```ts
 await initTables(databaseUrl, [MyModel, MyOtherModel])
 ```
