@@ -9,15 +9,14 @@ const builder = new QueryBuilder(databaseUrl);
 // Expected objects properties are in snake case.
 // This is normal, since in this file we don't init tables,
 // thus not populating the client / db field mapper.
+// So there is no aliases
 // Check annotations.test.ts to see properties named like
 // the original object.
 
 Deno.test("Insert single values, first result only", async () => {
   await withDatabase(async () => {
     await builder
-      .insert("test", [
-        { wine_id: 1, comment: "Hi mom!" },
-      ])
+      .insert("test", [{ wine_id: 1, comment: "Hi mom!" }])
       .execute();
 
     const actual = await builder

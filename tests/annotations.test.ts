@@ -1,12 +1,8 @@
+// DO NOT PUSH THIS UNCOMMENTED, IT WILL TRIGGER ANNOTATIONS ON CLIENT
+
 // import { assertEquals } from "../deps.ts";
 // import { initTables, SizedField } from "../src/orm/annotations.ts";
 // import { QueryBuilder } from "../src/query/query-builder.ts";
-
-Deno.test("", () => {
-  throw new Error(
-    "Must uncomment test below me. Do not push these test as it will trigger decorators on clients",
-  );
-});
 
 // const databaseUrl = Deno.env.get("DATABASE_URL") || "";
 // const builder = new QueryBuilder(databaseUrl);
