@@ -112,6 +112,29 @@ Deno.test("Update single field", async () => {
   });
 });
 
+Deno.test("Update single field with NULL", async () => {
+  await withDatabase(async () => {
+    await builder
+      .insert("test", [{ wine_id: 1, comment: "Hi mom!" }, {
+        wine_id: 2,
+        comment: "Hello",
+      }])
+      .execute();
+
+    await builder
+      .update("test", { field: "comment", value: null })
+      .where({ field: "comment", equals: "Hi mom!" })
+      .execute();
+
+    const actual = await builder
+      .select("comment")
+      .from("test")
+      .execute();
+
+    assertEquals(actual, [{ comment: "Hello" }, { comment: null }]);
+  });
+});
+
 Deno.test("Delete single row", async () => {
   await withDatabase(async () => {
     await builder

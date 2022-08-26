@@ -2,7 +2,7 @@ import { PreparedQueryText, QueryPart } from "./query.ts";
 
 export interface WhereCondition {
   field: string;
-  equals?: number | string | boolean;
+  equals?: number | string | boolean | null;
   sup?: number;
   inf?: number;
   like?: string;
@@ -11,7 +11,7 @@ export interface WhereCondition {
 // Replace like, supe, inf with an enum named operator, & and & or by an enum named agregator
 export interface InternalWhereCondition {
   field: string;
-  equals?: number | string | boolean;
+  equals?: number | string | boolean | null;
   sup?: number;
   inf?: number;
   like?: string;
