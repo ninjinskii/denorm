@@ -1,23 +1,19 @@
-// We will work a lot with any since we're trying to be as generic as possible to update anything in the db.
-// deno-lint-ignore-file no-explicit-any
-
 import { PreparedQueryText, QueryPart } from "./query.ts";
 
-export interface UpdateInfo {
-  field: string;
-  value: any;
+export interface UpdateInfo2 {
+  [field: string]: unknown
 }
 
 export class Update extends QueryPart {
   private tableName: string;
-  private updates: UpdateInfo[];
+  private updates: UpdateInfo2;
 
-  constructor(tableName: string, updates: UpdateInfo[]) {
+  constructor(tableName: string, updates: UpdateInfo2) {
     super();
     this.tableName = tableName;
     this.updates = updates;
 
-    if (updates.length === 0) {
+    if (Object.keys(updates).length === 0) {
       throw Error("Cannot perform empty UPDATE query");
     }
   }
@@ -28,9 +24,9 @@ export class Update extends QueryPart {
     const preparedValues = [];
     let preparedArgsCounter = 1;
 
-    for (const updateInfo of this.updates) {
-      updateInfoText.push(`${updateInfo.field} = $${preparedArgsCounter++}`);
-      preparedValues.push(updateInfo.value);
+    for (const field of Object.keys(this.updates)) {
+      updateInfoText.push(`${field} = $${preparedArgsCounter++}`);
+      preparedValues.push(this.updates[field]);
     }
 
     const text = `${start} ${updateInfoText.join(", ")}`;

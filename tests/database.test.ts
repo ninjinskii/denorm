@@ -98,7 +98,7 @@ Deno.test("Update single field", async () => {
       .execute();
 
     await builder
-      .update("test", { field: "wine_id", value: 3 })
+      .update("test", { wine_id: 3 })
       .where({ field: "comment", equals: "Hi mom!" })
       .execute();
 
@@ -115,14 +115,14 @@ Deno.test("Update single field", async () => {
 Deno.test("Update single field with NULL", async () => {
   await withDatabase(async () => {
     await builder
-      .insert("test", [{ wine_id: 1, comment: "Hi mom!" }, {
-        wine_id: 2,
-        comment: "Hello",
-      }])
+      .insert("test", [
+        { wine_id: 1, comment: "Hi mom!" },
+        { wine_id: 2, comment: "Hello" },
+      ])
       .execute();
 
     await builder
-      .update("test", { field: "comment", value: null })
+      .update("test", { comment: null})
       .where({ field: "comment", equals: "Hi mom!" })
       .execute();
 
@@ -132,6 +132,26 @@ Deno.test("Update single field with NULL", async () => {
       .execute();
 
     assertEquals(actual, [{ comment: "Hello" }, { comment: null }]);
+  });
+});
+
+Deno.test("Update multiple fields", async () => {
+  await withDatabase(async () => {
+    await builder
+      .insert("test", [{ wine_id: 1, comment: "Hi mom!" }])
+      .execute();
+
+    await builder
+      .update("test", { comment: "new", wine_id: 3 })
+      .where({ field: "comment", equals: "Hi mom!" })
+      .execute();
+
+    const actual = await builder
+      .select("*")
+      .from("test")
+      .execute();
+
+    assertEquals(actual, [{ wine_id: 3, comment: "new" }]);
   });
 });
 
@@ -191,7 +211,7 @@ Deno.test("Transaction", async () => {
         .execute();
 
       await builder
-        .update("test", { field: "wine_id", value: 2 })
+        .update("test", { wine_id: 2 })
         .where({ field: "wine_id", equals: 1 })
         .execute();
     });

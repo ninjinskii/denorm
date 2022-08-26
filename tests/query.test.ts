@@ -150,14 +150,14 @@ Deno.test("Create table", () => {
 });
 
 Deno.test("Update, single value", () => {
-  const update = new Update("wine", [{ field: "id", value: 1 }]);
+  const update = new Update("wine", { wine_id: 1 });
   const actual = update.toText().text;
 
-  assertEquals(actual, "UPDATE wine SET id = $1");
+  assertEquals(actual, "UPDATE wine SET wine_id = $1");
 });
 
 Deno.test("Update, single value", () => {
-  const update = new Update("wine", [{ field: "comment", value: "Hi mom!" }]);
+  const update = new Update("wine", { comment: "Hi mom!" });
   const actual = update.toText().text;
 
   assertEquals(actual, "UPDATE wine SET comment = $1");
@@ -204,7 +204,7 @@ Deno.test("Select + From + Where, multiple values", () => {
 
 Deno.test("Update + Where, single value", () => {
   const { text, args } = builder
-    .update("wine", { field: "comment", value: "Hey" })
+    .update("wine", { comment: "Hey" })
     .where({ field: "wine_id", equals: 1 })
     .and({ field: "comment", equals: "Hi mom!" })
     .toText();

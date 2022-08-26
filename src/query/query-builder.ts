@@ -5,7 +5,7 @@ import { PreparedQueryText, QueryText } from "./query.ts";
 import { QueryExecutor } from "./query-executor.ts";
 import { Select } from "./select.ts";
 import { InternalWhereCondition, Where, WhereCondition } from "./where.ts";
-import { Update, UpdateInfo } from "./update.ts";
+import { Update, UpdateInfo2 } from "./update.ts";
 import { Delete } from "./delete.ts";
 
 type Agregator = "AND" | "OR";
@@ -65,9 +65,9 @@ export class QueryBuilder {
     return this;
   }
 
-  update(tableName: string, ...updates: UpdateInfo[]): QueryBuilderAfterUpdate {
+  update(tableName: string, updates: UpdateInfo2): QueryBuilderAfterUpdate {
     this._update = new Update(tableName, updates);
-    this.whereArgsOffset = updates.length;
+    this.whereArgsOffset = Object.keys(updates).length;
     return this;
   }
 
