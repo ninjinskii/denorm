@@ -1,14 +1,14 @@
 import { PreparedQueryText, QueryPart } from "./query.ts";
 
-export interface UpdateInfo2 {
+export interface UpdateInfo {
   [field: string]: unknown
 }
 
 export class Update extends QueryPart {
   private tableName: string;
-  private updates: UpdateInfo2;
+  private updates: UpdateInfo;
 
-  constructor(tableName: string, updates: UpdateInfo2) {
+  constructor(tableName: string, updates: UpdateInfo) {
     super();
     this.tableName = tableName;
     this.updates = updates;
