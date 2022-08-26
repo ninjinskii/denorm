@@ -24,9 +24,20 @@ export class QueryExecutor {
     return this.client !== null;
   }
 
+  async startTransaction() {
+    const name = this.generateTransactionName();
+    this.transaction = this.client?.createTransaction(name) || null;
+    await this.transaction?.begin()
+  }
+
+  async endTransaction() {
+    await this.transaction?.commit()
+    this.transaction = null;
+  }
+
   async submitQuery<T>(query: QueryText): Promise<T[]> {
     await this.healthCheck();
-    const client = this.client as Client;
+    const client = this.transaction as Transaction || this.client as Client;
     const result = await client.queryObject<QueryObjectResult<T>>({
       ...query,
       camelcase: this.useNativeCamel,
@@ -54,12 +65,12 @@ export class QueryExecutor {
 
     for (const object of queryResult.rows) {
       const o = object as never;
-      const replacer = {} as never;
+      const renamed = {} as never;
 
       for (const key of Object.keys(o)) {
         if (tables.length === 1) {
           const renamedKey = aliasTracker[tables[0]][key] || key;
-          replacer[renamedKey] = o[key];
+          renamed[renamedKey] = o[key];
         } else if (tables.length > 1 && query.tableFields) {
           const table = query.tableFields.find((tableField) =>
             tableField.field === key
@@ -67,12 +78,12 @@ export class QueryExecutor {
 
           if (table) {
             const renamedKey = aliasTracker[table][key] || key;
-            replacer[renamedKey] = o[key];
+            renamed[renamedKey] = o[key];
           }
         }
       }
 
-      objects.push(replacer);
+      objects.push(renamed);
     }
 
     return objects;

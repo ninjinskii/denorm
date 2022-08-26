@@ -76,6 +76,10 @@ export class QueryBuilder {
     return this;
   }
 
+  getExecutor(): QueryExecutor {
+    return this.executor;
+  }
+
   private prepareWhere() {
     const agregators = this._agregators;
     const conditions = this._whereConditions;
@@ -188,7 +192,7 @@ export class QueryBuilder {
     return { text, args, affectedTables };
   }
 
-  private reset() {
+  reset() {
     this._select = null;
     this._from = null;
     this._where = null;
