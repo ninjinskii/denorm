@@ -156,7 +156,7 @@ Deno.test("Update, single value", () => {
   assertEquals(actual, "UPDATE wine SET wine_id = $1");
 });
 
-Deno.test("Update, single value", () => {
+Deno.test("Update, single value string", () => {
   const update = new Update("wine", { comment: "Hi mom!" });
   const actual = update.toText().text;
 
