@@ -122,15 +122,25 @@ Deno.test("Where combined only multiple equals AND & OR", () => {
 });
 
 Deno.test("Insert into", () => {
+  // Note that we set noAliasLookup to true to prevent an error
+  // since the alias tracker is not initialized in this test file.
   const insert = new Insert("wine", [
     { wine_id: 1, comment: "Bon", tasting_taste_comment: "Je l'ai bien aimé" },
     { wine_id: 2, comment: "", tasting_taste_comment: "Moyen" },
-  ]);
+  ], true);
 
   assertEquals(
     insert.toText().text,
     "INSERT INTO wine (wine_id, comment, tasting_taste_comment) VALUES ($1, $2, $3), ($4, $5, $6)",
   );
+  assertEquals(insert.toText().args, [
+    1,
+    "Bon",
+    "Je l'ai bien aimé",
+    2,
+    "",
+    "Moyen",
+  ]);
 });
 
 Deno.test("Create table", () => {

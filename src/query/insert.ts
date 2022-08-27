@@ -1,5 +1,6 @@
 // We will work a lot with any since we're trying to be as generic as possible to insert anything in the db.
 // deno-lint-ignore-file no-explicit-any
+import { aliasTracker } from "../orm/annotations.ts";
 import { PreparedQueryText, QueryPart, TableSelector } from "./query.ts";
 
 interface InsertValues {
@@ -10,11 +11,13 @@ interface InsertValues {
 export class Insert extends QueryPart implements TableSelector {
   private tableName: string;
   private objects: any[];
+  private noAliasLookup: boolean;
 
-  constructor(tableName: string, objects: any[]) {
+  constructor(tableName: string, objects: any[], noAliasLookup?: boolean) {
     super();
     this.tableName = tableName;
     this.objects = objects;
+    this.noAliasLookup = noAliasLookup || false;
 
     if (this.objects.length === 0) {
       throw new Error("Insert cannot be empty");
@@ -34,7 +37,21 @@ export class Insert extends QueryPart implements TableSelector {
   private extractFields(): string {
     // We'll use the first object to determine fields to update
     const exampleObject = this.objects[0];
-    return Object.keys(exampleObject).join(", ");
+    return Object.keys(exampleObject).map((key) => {
+      if (this.noAliasLookup) {
+        return key;
+      }
+
+      const tableAliases = aliasTracker[this.tableName];
+
+      if (tableAliases && tableAliases[key]) {
+        return tableAliases[key];
+      } else {
+        throw new Error(
+          `Tables "${this.tableName}" is not initialized. Did you call initTables() with the according type?`,
+        );
+      }
+    }).join(", ");
   }
 
   private extractValues(): InsertValues {
