@@ -13,7 +13,7 @@ services:
     ports:
       - 5000:5000
     environment:
-      - DATABASE_URL=postgres://postgres:plout@db/cavity
+      - DATABASE_URL=postgres://postgres:plout@db/denorm
     depends_on:
       - db
 
@@ -25,9 +25,9 @@ services:
     networks:
       - default
     environment:
-      - POSTGRES_DB=cavity
+      - POSTGRES_DB=denorm
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=plout
-      - PGDATA=/var/lib/postgresql/data/cavity
+      - PGDATA=/var/lib/postgresql/data/denorm
     volumes:
-      - /var/lib/postgresql/data/cavity:/var/lib/postgresql/data/cavity
+      - /var/lib/postgresql/data/denorm:/var/lib/postgresql/data/denorm
