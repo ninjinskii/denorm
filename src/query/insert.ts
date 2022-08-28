@@ -47,7 +47,7 @@ export class Insert extends QueryPart implements TableSelector {
       if (tableAliases && tableAliases[key]) {
         return tableAliases[key];
       } else {
-        console.log("Failed to get field ${key} in alais table");
+        console.log(`Failed to get field ${key} in alais table`);
         console.log(aliasTracker);
         return key;
       }
