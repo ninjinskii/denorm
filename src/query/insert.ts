@@ -47,9 +47,7 @@ export class Insert extends QueryPart implements TableSelector {
       if (tableAliases && tableAliases[key]) {
         return tableAliases[key];
       } else {
-        throw new Error(
-          `Tables "${this.tableName}" is not initialized. Did you call initTables() with the according type?`,
-        );
+        return key;
       }
     }).join(", ");
   }

@@ -33,10 +33,6 @@ export async function initTables(databaseUrl: string, _types: any[]) {
   // without us having to provide an instance of model
   // and describing fake parameters (e.g new Wine("", "", 1, ""))
   // to comply with TS type checks
-
-  console.log(fields)
-  console.log(aliasTracker)
-
   const executor = new QueryExecutor(databaseUrl);
   await executor["init"]();
 
@@ -97,7 +93,7 @@ function updateAliasTracker(field: Field, table: string) {
 
 export function Entity(tableName: string) {
   return function (_constructor: Function) {
-    console.log(`Running entity ${tableName}`);
+    console.log(`Processing entity ${tableName}`);
     fields.unshift({ tableName });
   };
 }
@@ -169,10 +165,6 @@ function processAnnotation(
 
   const primaryKey = isPrimaryKey || undefined;
   const field = { type, primaryKey, as, nullable, name, size };
-
-  // if (as) {
-  //   aliasTracker[aliasTracker.length - 1][as] = name;
-  // }
 
   // Note that last parameters annotation's runs first
   fields.unshift(field);

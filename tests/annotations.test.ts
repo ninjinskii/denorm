@@ -81,6 +81,18 @@ Deno.test("Create multipe table", async () => {
   });
 });
 
+Deno.test("Delete nothing", async () => {
+  await withDatabase(async () => {
+    await dropTables();
+    await initTables(databaseUrl, [Wine, Bottle]);
+    await builder
+      .delete()
+      .from("wine")
+      .where({ field: "id", equals: 1 })
+      .execute();
+  });
+});
+
 async function withDatabase(block: () => Promise<void>) {
   await builder["executor"]["init"]();
   await block();
