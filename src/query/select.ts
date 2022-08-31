@@ -8,7 +8,7 @@ export class Select extends QueryPart {
     this.projection = projection;
 
     if (projection.length === 0) {
-      throw Error("Cannot perform empty SELECT query")
+      projection.push("*");
     }
   }
 

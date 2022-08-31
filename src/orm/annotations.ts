@@ -3,6 +3,13 @@
 import { Create, Field, SizeableType, Type } from "../query/create.ts";
 import { QueryExecutor } from "../query/query-executor.ts";
 
+// How does the annotation system works:
+// When referencing a type, like we do in initTables(databaseUrl, Wine, Bottle),
+// all annotations of every class runs.
+// First, member annotations, then class annotation, then proceed to the next type.
+// Each fields will be placed in `fields` array, with a placeholder on the table.
+// Then, class annotation (@Entity) will look for these placeholders and replace them with the actual table name.
+
 export enum Nullable {
   YES = "NULLABLE",
   NO = "NOT NULL",
@@ -16,16 +23,14 @@ interface AliasTracker {
   [fieldName: string]: string;
 }
 
-interface TableSeparator {
-  tableName: string;
-}
-
-const fields: Array<Field | TableSeparator> = [];
+export const fields: Field[] = [];
 
 // Keep track of every fields that uses "as" to get correct mapping when
 // grabbing values out of db.
 // PS: not used if the model is not defined (no decorators)
 export const aliasTracker: TableAliasTracker = {};
+
+let initAlreadyCalled = false;
 
 export async function initTables(databaseUrl: string, _types: any[]) {
   // We wont use the types, but we need them to be evaluated.
@@ -33,6 +38,10 @@ export async function initTables(databaseUrl: string, _types: any[]) {
   // without us having to provide an instance of model
   // and describing fake parameters (e.g new Wine("", "", 1, ""))
   // to comply with TS type checks
+  if (initAlreadyCalled) {
+    throw new Error("Cannot call initTables() multiple times");
+  }
+
   const executor = new QueryExecutor(databaseUrl);
   await executor["init"]();
 
@@ -41,15 +50,15 @@ export async function initTables(databaseUrl: string, _types: any[]) {
   let hasPrimaryKey = true;
 
   for (const field of fields) {
-    const name = (field as TableSeparator).tableName;
-    const primaryKey = (field as Field).primaryKey;
+    const primaryKey = field.primaryKey;
     const table = lastOf(tableNames);
 
     if (primaryKey) {
       hasPrimaryKey = true;
     }
 
-    if (name) {
+    const newTable = lastOf(tableNames) !== field.table;
+    if (newTable) {
       if (!hasPrimaryKey) {
         throw new Error(
           `Table "${table}" has no primary key, use @PrimaryKey on a property.`,
@@ -57,17 +66,18 @@ export async function initTables(databaseUrl: string, _types: any[]) {
       }
 
       hasPrimaryKey = false; // Switch table. So we want to look for a new PK
-      tableNames.push(name);
+      tableNames.push(field.table);
       fieldByTable.push([]); // This empty array is a slot for next fields of this new table
     } else if (table) {
-      const actualField = field as Field;
-      updateAliasTracker(actualField, table);
-      lastOf(fieldByTable)?.push(field as Field);
+      updateAliasTracker(field, table);
+      lastOf(fieldByTable)?.push(field);
     }
   }
 
   // Most likely, developer missed a class annotation
-  if (tableNames.length !== fieldByTable.length) {
+  if (
+    tableNames.length !== fieldByTable.length || fieldByTable[0].length === 0
+  ) {
     throw new Error(
       "Cannot create tables. Did you add @Entity to all your model classes?",
     );
@@ -79,6 +89,7 @@ export async function initTables(databaseUrl: string, _types: any[]) {
     await executor.submitQuery(query);
   }
 
+  initAlreadyCalled = true;
   await executor["client"]?.end();
 }
 
@@ -93,8 +104,9 @@ function updateAliasTracker(field: Field, table: string) {
 
 export function Entity(tableName: string) {
   return function (_constructor: Function) {
-    console.log(`Processing entity ${tableName}`);
-    fields.unshift({ tableName });
+    fields
+      .filter((field) => field.table === "")
+      .forEach((field) => field.table = tableName);
   };
 }
 
@@ -164,7 +176,7 @@ function processAnnotation(
   const name = Object.keys(new target())[parameterIndex];
 
   const primaryKey = isPrimaryKey || undefined;
-  const field = { type, primaryKey, as, nullable, name, size };
+  const field = { type, primaryKey, as, nullable, name, size, table: "" };
 
   // Note that last parameters annotation's runs first
   fields.unshift(field);

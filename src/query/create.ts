@@ -4,6 +4,7 @@ import { QueryPart, QueryText } from "./query.ts";
 export interface Field {
   type: Type;
   name: string;
+  table: string
   primaryKey?: boolean;
   size?: number;
   as?: string;
