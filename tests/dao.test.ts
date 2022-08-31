@@ -1,16 +1,48 @@
 import { assertEquals, Client } from "../deps.ts";
 import { initTables } from "../src/orm/annotations.ts";
 import { Bottle, Dao, TestDao, Wine } from "../src/orm/dao.ts";
-import { UpdateRaw } from "../src/query/update-from-raw-objects.ts";
+import { UpdateMass } from "../src/query/update-mass.ts";
 
 const client = new Client(Deno.env.get("DATABASE_URL"));
+const wines = [
+  { id: 1, name: "Immelé", naming: "Gewurtz", isOrganic: true },
+  { id: 2, name: "Nom", naming: "Riesling", isOrganic: false },
+];
 
-// Deno.test("Select annotation", async () => {
-//   const actual = await withClient(async () => {
-//     const dao = new TestDao(client);
-//     const result = await dao.getAllWines();
-//   });
-// });
+Deno.test("Mass update", async () => {
+  await initTables(Deno.env.get("DATABASE_URL") || "", [Wine, Bottle]);
+  const updateRaw = new UpdateMass("wine", wines);
+
+  const { queries, groupedPreparedValues } = updateRaw.getPreparedQueries();
+  assertEquals(queries, [
+    "UPDATE wine SET id = $1, name = $2, naming = $3, is_organic = $4 WHERE id = 1",
+    "UPDATE wine SET id = $1, name = $2, naming = $3, is_organic = $4 WHERE id = 2",
+  ]);
+
+  assertEquals(
+    groupedPreparedValues,
+    [[1, "Immelé", "Gewurtz", true], [2, "Nom", "Riesling", false]],
+  );
+});
+
+Deno.test("Insert annotation", async () => {
+  const actual = await withClient(async () => {
+    const dao = new TestDao(client);
+    return await dao.insertWines(wines);
+  });
+
+  // Number of expected inserted rows
+  assertEquals(actual, 2);
+});
+
+Deno.test("Select annotation", async () => {
+  const actual = await withClient(async () => {
+    const dao = new TestDao(client);
+    return await dao.getAllWines();
+  });
+
+  assertEquals(actual, wines);
+});
 
 // Deno.test("Query annotation", async () => {
 //   const actual = await withClient(async () => {
@@ -19,19 +51,7 @@ const client = new Client(Deno.env.get("DATABASE_URL"));
 //   });
 // });
 
-Deno.test("Update raw", async () => {
-  await initTables(Deno.env.get("DATABASE_URL") || "", [Wine]);
-  const updateRaw = new UpdateRaw("wine", [{
-    id: 1,
-    name: "Immelé",
-    naming: "Gewurtz",
-    isOrganic: true,
-  }]);
-
-  console.log(updateRaw.getPreparedQuery());
-});
-
-async function withClient(block: () => Promise<void>) {
+async function withClient<T>(block: () => Promise<T>) {
   await client.connect();
   const result = await block();
   await client.end();

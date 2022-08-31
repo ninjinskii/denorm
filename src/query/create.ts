@@ -60,8 +60,8 @@ export class Create extends QueryPart {
 
       fieldsText.push(text);
     }
-
     const text = `${start}${fieldsText.join(", ")}${end}`;
+    console.log(text)
     return { text, affectedTables: [this.tableName] };
   }
 }

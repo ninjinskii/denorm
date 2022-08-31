@@ -2,7 +2,8 @@
 // deno-lint-ignore-file no-explicit-any
 import { fields } from "../orm/annotations.ts";
 
-export class UpdateRaw {
+// Give a list of objects directly, instead of field to modify
+export class UpdateMass {
   private tableName: string;
   private objects: any[];
 
@@ -15,7 +16,7 @@ export class UpdateRaw {
     }
   }
 
-  getPreparedQuery() {
+  getPreparedQueries() {
     const queries = [];
     const groupedPreparedValues = [];
     const tableFields = fields.filter((field) =>

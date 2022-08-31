@@ -145,9 +145,9 @@ Deno.test("Insert into", () => {
 
 Deno.test("Create table", () => {
   const fields: Field[] = [
-    { name: "id", type: "SERIAL", primaryKey: true },
-    { name: "bottleId", type: "INT", as: "bottle_id" },
-    { name: "tasting_id", type: "INT", nullable: Nullable.YES },
+    { name: "id", type: "SERIAL", primaryKey: true, table: "" },
+    { name: "bottleId", type: "INT", as: "bottle_id", table: "" },
+    { name: "tasting_id", type: "INT", nullable: Nullable.YES, table: "" },
   ];
 
   const create = new Create("wine", fields);
