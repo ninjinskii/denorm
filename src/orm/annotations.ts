@@ -68,6 +68,7 @@ export async function initTables(databaseUrl: string, _types: any[]) {
       hasPrimaryKey = false; // Switch table. So we want to look for a new PK
       tableNames.push(field.table);
       fieldByTable.push([]); // This empty array is a slot for next fields of this new table
+      lastOf(fieldByTable)?.push(field);
     } else if (table) {
       updateAliasTracker(field, table);
       lastOf(fieldByTable)?.push(field);
