@@ -1,3 +1,4 @@
+// We want to be generic
 // deno-lint-ignore-file no-explicit-any
 import { fields } from "../orm/annotations.ts";
 
