@@ -48,16 +48,13 @@ export class Insert extends QueryPart implements TableSelector {
         // We need a reverse lookup
         for (const [_key, value] of Object.entries(tableAliases)) {
           if (value === key) {
-            console.log(_key)
             return _key;
           }
         }
         
-        console.log(key)
         return key;
       } else {
-        console.log(`Failed to get field ${key} in alais table`);
-        console.log(aliasTracker);
+        console.log(`Failed to get field ${key} in alias table`);
         return key;
       }
     }).join(", ");

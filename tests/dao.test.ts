@@ -3,6 +3,13 @@ import { initTables } from "../src/orm/annotations.ts";
 import { Bottle, Dao, TestDao, Wine } from "../src/orm/dao.ts";
 import { UpdateMass } from "../src/query/update-mass.ts";
 
+// TODO: add semi colon at end of query. RN its qury builder that's doing it.
+// TODO: refactor SELECT that now should include FROM as well
+// TODO: try to remove the tableFields thign for Select queries. Automtaic support for multiple queries will no
+// longer be supported, but you can still do a @Query() with your special select
+// TODO: use the fields parameter in almost all queries at the postgres driver level.
+// This should avoid us doing weird stuff with aliases
+
 const client = new Client(Deno.env.get("DATABASE_URL"));
 const wines = [
   { id: 1, name: "Immelé", naming: "Gewurtz", isOrganic: true },

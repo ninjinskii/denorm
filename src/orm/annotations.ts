@@ -177,7 +177,8 @@ function processAnnotation(
   const name = Object.keys(new target())[parameterIndex];
 
   const primaryKey = isPrimaryKey || undefined;
-  const field = { type, primaryKey, as, nullable, name, size, table: "" };
+  const _as = as || name;
+  const field = { type, primaryKey, as: _as, nullable, name, size, table: "" };
 
   // Note that last parameters annotation's runs first
   fields.unshift(field);

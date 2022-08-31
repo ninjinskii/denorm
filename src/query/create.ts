@@ -5,9 +5,9 @@ export interface Field {
   type: Type;
   name: string;
   table: string
+  as: string;
   primaryKey?: boolean;
   size?: number;
-  as?: string;
   nullable?: Nullable;
 }
 

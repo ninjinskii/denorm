@@ -3,9 +3,6 @@ import { Insert as InsertQuery } from "../query/insert.ts";
 import { UpdateMass } from "../query/update-mass.ts";
 import { Dao } from "./dao.ts";
 
-// TODO: add semi colon at end of query. RN its qury builder that's doing it.
-// TODO: refactor SELECT that now should include FROM as well
-
 export function Select(table: string) {
   return function (
     target: any,
