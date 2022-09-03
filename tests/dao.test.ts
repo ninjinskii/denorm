@@ -82,12 +82,14 @@ Deno.test("Delete annotation", async () => {
   assertEquals(actual.length, 1);
 });
 
-// Deno.test("Query annotation", async () => {
-//   const actual = await withClient(async () => {
-//     const dao = new TestDao(client);
-//     const result = await dao.getWineById(1);
-//   });
-// });
+Deno.test("Query annotation", async () => {
+  const actual = await withClient(async () => {
+    const dao = new TestDao(client);
+    return await dao.getWineById(2, 3);
+  });
+
+  assertEquals(actual, [{ id: 2, name: "Pouilly", naming: "Ch" }]);
+});
 
 async function withClient<T>(block: () => Promise<T>) {
   await client.connect();

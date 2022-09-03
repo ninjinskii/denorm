@@ -26,12 +26,17 @@ export class TestDao extends Dao {
   }
 
   @Delete("wine")
-  delete(_where: Where) : Promise<number> {
+  delete(_where: Where): Promise<number> {
     throw new Error();
   }
 
-  @Query("SELECT * FROM wine WHERE id = $1")
-  getWineById(id: number): Promise<Wine | null> {
+  @Query(
+    "SELECT id, name, SUBSTR(naming, 0, $2) AS naming FROM wine WHERE id = $1",
+  )
+  getWineById(
+    _id: number,
+    _max: number,
+  ): Promise<{ id: number; name: string; naming: string }[]> {
     throw new Error();
   }
 }
