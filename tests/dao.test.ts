@@ -5,9 +5,8 @@ import { UpdateMass } from "../src/query/update-mass.ts";
 
 // TODO: add semi colon at end of query. RN its qury builder that's doing it.
 // TODO: refactor SELECT that now should include FROM as well
-// TODO: try to remove the tableFields thign for Select queries. Automtaic support for multiple queries will no
-// longer be supported, but you can still do a @Query() with your special select
 // TODO: in UPDATE, use "as" instead of aliasTracker, bc now every field will have the "as" set
+// TODO: Pass optionnal where argument to SELECT, DELETE and UPDATE (where: { a: 1, and: { b: 2 } })
 
 const client = new Client(Deno.env.get("DATABASE_URL"));
 const wines = [

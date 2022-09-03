@@ -1,5 +1,6 @@
 import { Client } from "../../deps.ts";
 import { Insert as InsertQuery } from "../query/insert.ts";
+import { Select as SelectQuery } from "../query/select.ts";
 import { UpdateMass } from "../query/update-mass.ts";
 import { fields } from "./annotations.ts";
 import { Dao } from "./dao.ts";
@@ -12,12 +13,11 @@ export function Select(table: string) {
   ) {
     descriptor.value = async function (...args: string[]) {
       const client = assertClient(this);
-      const query = `SELECT * FROM ${table}`;
+      const query = new SelectQuery(table).toText().text;
       const names = fields
         .filter((field) => field.table === table)
         .map((field) => field.name);
 
-      console.log(names);
       const result = await client.queryObject({ text: query, fields: names });
       return result.rows;
     };
