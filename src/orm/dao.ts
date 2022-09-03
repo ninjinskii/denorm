@@ -1,4 +1,3 @@
-// deno-lint-ignore-file no-unused-vars
 import { Client } from "../../deps.ts";
 import { Where } from "../query/where.ts";
 import { Entity, Field, Nullable, PrimaryKey } from "./annotations.ts";

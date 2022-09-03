@@ -1,7 +1,7 @@
 // The value can be of whatever type
 // deno-lint-ignore-file no-explicit-any
 
-import { PreparedQueryText, QueryPart, QueryText } from "./query.ts";
+import { PreparedQueryText, QueryPart } from "./query.ts";
 
 export interface WhereCondition {
   [field: string]: any;

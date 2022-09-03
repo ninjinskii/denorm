@@ -5,7 +5,7 @@ import { Client } from "../../deps.ts";
 import { Insert as InsertQuery } from "../query/insert.ts";
 import { Select as SelectQuery } from "../query/select.ts";
 import { Delete as DeleteQuery } from "../query/delete.ts";
-import { UpdateMass } from "../query/update-mass.ts";
+import { Update as UpdateQuery } from "../query/update.ts";
 import { PreparedWhere, Where } from "../query/where.ts";
 import { fields } from "./annotations.ts";
 import { Dao } from "./dao.ts";
@@ -79,7 +79,7 @@ export function Update(table: string) {
   ) {
     descriptor.value = async function (...args: any[]) {
       const client = assertClient(this);
-      const { queries, groupedPreparedValues } = new UpdateMass(table, args[0])
+      const { queries, groupedPreparedValues } = new UpdateQuery(table, args[0])
         .getPreparedQueries();
 
       const t = client.createTransaction("transaction");
@@ -118,7 +118,7 @@ export function Delete(table: string) {
         );
       }
 
-      const where = args[0] as unknown as Where
+      const where = args[0] as unknown as Where;
       const client = assertClient(this);
       const _delete = new DeleteQuery(table).toText().text;
       const query = addWhere(_delete, where);

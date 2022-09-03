@@ -1,14 +1,14 @@
 // We will work a lot with any since we're trying to be as generic as possible to insert anything in the db.
 // deno-lint-ignore-file no-explicit-any
 import { aliasTracker } from "../orm/annotations.ts";
-import { PreparedQueryText, QueryPart, TableSelector } from "./query.ts";
+import { PreparedQueryText, QueryPart } from "./query.ts";
 
 interface InsertValues {
   values: any[];
   preparedValues: string;
 }
 
-export class Insert extends QueryPart implements TableSelector {
+export class Insert extends QueryPart {
   private tableName: string;
   private objects: any[];
   private noAliasLookup: boolean;
@@ -78,9 +78,5 @@ export class Insert extends QueryPart implements TableSelector {
 
     const preparedValues = preparedValuesArray.join(", ");
     return { values, preparedValues };
-  }
-
-  getAffectedTables(): string[] {
-    return [this.tableName];
   }
 }

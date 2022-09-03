@@ -1,8 +1,10 @@
-import { assertEquals, assertThrows, Client } from "../deps.ts";
-import { fields, initTables } from "../src/orm/annotations.ts";
-import { Bottle, Dao, TestDao, Wine } from "../src/orm/dao.ts";
-import { UpdateMass } from "../src/query/update-mass.ts";
+import { assertEquals, Client } from "../deps.ts";
+import { initTables } from "../src/orm/annotations.ts";
+import { Bottle, TestDao, Wine } from "../src/orm/dao.ts";
+import { Update } from "../src/query/update.ts";
 import { Where } from "../src/query/where.ts";
+
+// TODO:: remove alias tracker and update INSERT accordingly
 
 const client = new Client(Deno.env.get("DATABASE_URL"));
 const wines = [
@@ -16,7 +18,7 @@ const updatedWines = [
 ];
 
 Deno.test("Insert annotation", async () => {
-  await initTables(Deno.env.get("DATABASE_URL") || "", [Wine, Bottle]);
+  await initTables(client, [Wine, Bottle]);
   const actual = await withClient(async () => {
     await client.queryObject("DELETE FROM wine");
     const dao = new TestDao(client);
@@ -38,7 +40,7 @@ Deno.test("Select annotation", async () => {
 
 // This test lives here and not in query.test.ts bc UpdateMass needs table initializaiton (to fetch PK) to work.
 Deno.test("Mass update without db", () => {
-  const updateRaw = new UpdateMass("wine", wines);
+  const updateRaw = new Update("wine", wines);
 
   const { queries, groupedPreparedValues } = updateRaw.getPreparedQueries();
   assertEquals(queries, [

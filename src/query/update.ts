@@ -1,35 +1,56 @@
-import { PreparedQueryText, QueryPart } from "./query.ts";
+// We want to be generic
+// deno-lint-ignore-file no-explicit-any
+import { fields } from "../orm/annotations.ts";
 
-export interface UpdateInfo {
-  [field: string]: unknown
-}
-
-export class Update extends QueryPart {
+// Give a list of objects directly, instead of field to modify
+export class Update {
   private tableName: string;
-  private updates: UpdateInfo;
+  private objects: any[];
 
-  constructor(tableName: string, updates: UpdateInfo) {
-    super();
+  constructor(tableName: string, objects: any[]) {
     this.tableName = tableName;
-    this.updates = updates;
+    this.objects = objects;
 
-    if (Object.keys(updates).length === 0) {
+    if (Object.keys(objects).length === 0) {
       throw Error("Cannot perform empty UPDATE query");
     }
   }
 
-  toText(): PreparedQueryText {
-    const start = `UPDATE ${this.tableName} SET`;
-    const updateInfoText = [];
-    const preparedValues = [];
-    let preparedArgsCounter = 1;
+  getPreparedQueries() {
+    const queries = [];
+    const groupedPreparedValues = [];
+    const tableFields = fields.filter((field) =>
+      field.table === this.tableName
+    );
+    const primaryKey = tableFields.find((field) =>
+      field.table === this.tableName && field.primaryKey
+    )?.name;
 
-    for (const field of Object.keys(this.updates)) {
-      updateInfoText.push(`${field} = $${preparedArgsCounter++}`);
-      preparedValues.push(this.updates[field]);
+    if (!primaryKey) {
+      throw new Error(
+        `Table "${this.tableName}" has no primary key, use @PrimaryKey on a property.`,
+      );
     }
 
-    const text = `${start} ${updateInfoText.join(", ")}`;
-    return { text, affectedTables: [this.tableName], args: preparedValues };
+    for (const object of this.objects) {
+      const start = `UPDATE ${this.tableName} SET`;
+      const end = `WHERE ${primaryKey} = ${object[primaryKey]}`;
+      const updateText = [];
+      const preparedValues = [];
+      let preparedArgsCounter = 1;
+
+      for (const key of Object.keys(object)) {
+        const alias = tableFields.find((field) => field.name === key)?.as ||
+          key;
+
+        updateText.push(`${alias} = $${preparedArgsCounter++}`);
+        preparedValues.push(object[key as never]);
+      }
+
+      queries.push(`${start} ${updateText.join(", ")} ${end}`);
+      groupedPreparedValues.push(preparedValues);
+    }
+
+    return { queries, groupedPreparedValues };
   }
 }

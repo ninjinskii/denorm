@@ -1,7 +1,7 @@
 // Ultra generic annotations, we expect weird type
 // deno-lint-ignore-file no-explicit-any ban-types
+import { Client } from "../../deps.ts";
 import { Create, Field, SizeableType, Type } from "../query/create.ts";
-import { QueryExecutor } from "../query/query-executor.ts";
 
 // How does the annotation system works:
 // When referencing a type, like we do in initTables(databaseUrl, Wine, Bottle),
@@ -32,7 +32,7 @@ export const aliasTracker: TableAliasTracker = {};
 
 let initAlreadyCalled = false;
 
-export async function initTables(databaseUrl: string, _types: any[]) {
+export async function initTables(client: Client, _types: any[]) {
   // We wont use the types, but we need them to be evaluated.
   // Evaluating the type will trigger model's annotations
   // without us having to provide an instance of model
@@ -42,8 +42,7 @@ export async function initTables(databaseUrl: string, _types: any[]) {
     throw new Error("Cannot call initTables() multiple times");
   }
 
-  const executor = new QueryExecutor(databaseUrl);
-  await executor["init"]();
+  await client.connect();
 
   const fieldByTable: Array<Field[]> = [];
   const tableNames: string[] = [];
@@ -87,11 +86,11 @@ export async function initTables(databaseUrl: string, _types: any[]) {
   for (const [index, fields] of fieldByTable.entries()) {
     const tableName = tableNames[index];
     const query = new Create(tableName, fields).toText();
-    await executor.submitQuery(query);
+    await client.queryObject(query);
   }
 
   initAlreadyCalled = true;
-  await executor["client"]?.end();
+  await client.end();
 }
 
 function updateAliasTracker(field: Field, table: string) {
