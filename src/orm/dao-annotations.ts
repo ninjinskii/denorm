@@ -64,7 +64,7 @@ export function Insert(table: string) {
       const client = assertClient(this);
       const query = new InsertQuery(table, args).toText();
       const result = await client.queryObject(query);
-      return result.rowCount; // Number of row inserted
+      return result.rowCount || 0; // Number of row inserted
     };
 
     return descriptor;
@@ -86,7 +86,6 @@ export function Update(table: string) {
       let index = 0;
       let rowsUpdated = 0;
 
-      console.log(queries);
       await t.begin();
 
       for (const query of queries) {
@@ -106,19 +105,20 @@ export function Update(table: string) {
   };
 }
 
-export function Delete(table: string, where?: Where | PreparedWhere) {
+export function Delete(table: string) {
   return function (
     _target: any,
     _propertyKey: string,
     descriptor: PropertyDescriptor,
   ) {
-    if (!where) {
-      throw new Error(
-        "Where without condition is too risky. If you really want to do so, use @Query('DELETE FROM <table>')",
-      );
-    }
+    descriptor.value = async function (...args: string[]) {
+      if (!args[0]) {
+        throw new Error(
+          "Where without condition is too risky. If you really want to do so, use @Query('DELETE FROM <table>')",
+        );
+      }
 
-    descriptor.value = async function (..._args: string[]) {
+      const where = args[0] as unknown as Where
       const client = assertClient(this);
       const _delete = new DeleteQuery(table).toText().text;
       const query = addWhere(_delete, where);
@@ -129,7 +129,7 @@ export function Delete(table: string, where?: Where | PreparedWhere) {
         args: preparedArgs,
       });
 
-      return result.rows;
+      return result.rowCount || 0;
     };
 
     return descriptor;

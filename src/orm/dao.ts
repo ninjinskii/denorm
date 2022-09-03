@@ -1,7 +1,8 @@
 // deno-lint-ignore-file no-unused-vars
 import { Client } from "../../deps.ts";
+import { Where } from "../query/where.ts";
 import { Entity, Field, Nullable, PrimaryKey } from "./annotations.ts";
-import { Insert, Query, Select, Update } from "./dao-annotations.ts";
+import { Delete, Insert, Query, Select, Update } from "./dao-annotations.ts";
 
 export class Dao {
   public constructor(public client: Client) {
@@ -10,7 +11,7 @@ export class Dao {
 
 export class TestDao extends Dao {
   @Select("wine")
-  getAll(..._projection: string[]): Promise<Wine[]> {
+  getAll(): Promise<Wine[]> {
     throw new Error();
   }
 
@@ -24,8 +25,13 @@ export class TestDao extends Dao {
     throw new Error();
   }
 
+  @Delete("wine")
+  delete(_where: Where) : Promise<number> {
+    throw new Error();
+  }
+
   @Query("SELECT * FROM wine WHERE id = $1")
-  getWineById(id: number): Promise<Wine | null> { // test null case
+  getWineById(id: number): Promise<Wine | null> {
     throw new Error();
   }
 }

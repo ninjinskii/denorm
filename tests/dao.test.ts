@@ -1,7 +1,8 @@
-import { assertEquals, Client } from "../deps.ts";
+import { assertEquals, assertThrows, Client } from "../deps.ts";
 import { fields, initTables } from "../src/orm/annotations.ts";
 import { Bottle, Dao, TestDao, Wine } from "../src/orm/dao.ts";
 import { UpdateMass } from "../src/query/update-mass.ts";
+import { Where } from "../src/query/where.ts";
 
 const client = new Client(Deno.env.get("DATABASE_URL"));
 const wines = [
@@ -64,6 +65,21 @@ Deno.test("Mass update with db", async () => {
 
   assertEquals(rowsUpdated, updatedWines.length);
   assertEquals(actual, updatedWines);
+});
+
+Deno.test("Delete annotation", async () => {
+  const rowDeleted = await withClient(async () => {
+    const dao = new TestDao(client);
+    return await dao.delete(new Where({ id: 1 }));
+  });
+
+  const actual = await withClient(async () => {
+    const dao = new TestDao(client);
+    return await dao.getAll();
+  });
+
+  assertEquals(rowDeleted, 1);
+  assertEquals(actual.length, 1);
 });
 
 // Deno.test("Query annotation", async () => {

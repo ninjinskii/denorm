@@ -9,6 +9,6 @@ export class Delete extends QueryPart {
   }
 
   toText(): QueryText {
-    return { text: `DELETE FROM ${this.table}` };
+    return { text: `DELETE FROM ${this.table};` };
   }
 }
