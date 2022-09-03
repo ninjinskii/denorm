@@ -1,24 +1,36 @@
+// Client would pass us any type
+// deno-lint-ignore-file no-explicit-any
+
 import { Client } from "../../deps.ts";
 import { Insert as InsertQuery } from "../query/insert.ts";
 import { Select as SelectQuery } from "../query/select.ts";
+import { Delete as DeleteQuery } from "../query/delete.ts";
 import { UpdateMass } from "../query/update-mass.ts";
+import { PreparedWhere, Where } from "../query/where.ts";
 import { fields } from "./annotations.ts";
 import { Dao } from "./dao.ts";
 
-export function Select(table: string) {
+export function Select(table: string, where?: Where | PreparedWhere) {
   return function (
-    target: any,
+    _target: any,
     _propertyKey: string,
     descriptor: PropertyDescriptor,
   ) {
-    descriptor.value = async function (...args: string[]) {
+    descriptor.value = async function (..._args: string[]) {
       const client = assertClient(this);
-      const query = new SelectQuery(table).toText().text;
+      const select = new SelectQuery(table).toText().text;
+      const query = addWhere(select, where);
+      const preparedArgs = where ? where.toText().args : [];
       const names = fields
         .filter((field) => field.table === table)
         .map((field) => field.name);
 
-      const result = await client.queryObject({ text: query, fields: names });
+      const result = await client.queryObject({
+        text: query,
+        fields: names,
+        args: preparedArgs,
+      });
+
       return result.rows;
     };
 
@@ -28,7 +40,7 @@ export function Select(table: string) {
 
 export function Query(query: string) {
   return function (
-    target: any,
+    _target: any,
     _propertyKey: string,
     descriptor: PropertyDescriptor,
   ) {
@@ -44,7 +56,7 @@ export function Query(query: string) {
 
 export function Insert(table: string) {
   return function (
-    target: any,
+    _target: any,
     _propertyKey: string,
     descriptor: PropertyDescriptor,
   ) {
@@ -61,7 +73,7 @@ export function Insert(table: string) {
 
 export function Update(table: string) {
   return function (
-    target: any,
+    _target: any,
     _propertyKey: string,
     descriptor: PropertyDescriptor,
   ) {
@@ -85,6 +97,36 @@ export function Update(table: string) {
   };
 }
 
+export function Delete(table: string, where?: Where | PreparedWhere) {
+  return function (
+    _target: any,
+    _propertyKey: string,
+    descriptor: PropertyDescriptor,
+  ) {
+    if (!where) {
+      throw new Error(
+        "Where without condition is too risky. If you really want to do so, use @Query('DELETE FROM <table>')",
+      );
+    }
+
+    descriptor.value = async function (..._args: string[]) {
+      const client = assertClient(this);
+      const _delete = new DeleteQuery(table).toText().text;
+      const query = addWhere(_delete, where);
+      const preparedArgs = where.toText().args;
+
+      const result = await client.queryObject({
+        text: query,
+        args: preparedArgs,
+      });
+
+      return result.rows;
+    };
+
+    return descriptor;
+  };
+}
+
 function assertClient(context: any): Client {
   if ((context as Dao).client) {
     return context.client;
@@ -93,4 +135,13 @@ function assertClient(context: any): Client {
       "@Select, @Insert, @Update, @Delete, should used inside a Dao class.",
     );
   }
+}
+
+function addWhere(base: string, where?: Where | PreparedWhere) {
+  if (where) {
+    const noTrailingSemiColon = base.slice(0, -1);
+    return `${noTrailingSemiColon} ${where.toText().text};`;
+  }
+
+  return base;
 }
