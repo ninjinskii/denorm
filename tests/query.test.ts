@@ -113,17 +113,3 @@ Deno.test("Create table", () => {
     `CREATE TABLE IF NOT EXISTS wine (id SERIAL PRIMARY KEY, bottle_id INT NOT NULL, tasting_id INT);`,
   );
 });
-
-Deno.test("Update, single value", () => {
-  const update = new Update("wine", { wine_id: 1 });
-  const actual = update.toText().text;
-
-  assertEquals(actual, "UPDATE wine SET wine_id = $1");
-});
-
-Deno.test("Update, single value string", () => {
-  const update = new Update("wine", { comment: "Hi mom!" });
-  const actual = update.toText().text;
-
-  assertEquals(actual, "UPDATE wine SET comment = $1");
-});

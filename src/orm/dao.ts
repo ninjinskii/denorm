@@ -1,7 +1,7 @@
 // deno-lint-ignore-file no-unused-vars
 import { Client } from "../../deps.ts";
 import { Entity, Field, Nullable, PrimaryKey } from "./annotations.ts";
-import { Insert, Query, Select } from "./dao-annotations.ts";
+import { Insert, Query, Select, Update } from "./dao-annotations.ts";
 
 export class Dao {
   public constructor(public client: Client) {
@@ -10,12 +10,17 @@ export class Dao {
 
 export class TestDao extends Dao {
   @Select("wine")
-  getAllWines(...projection: string[]): Promise<Wine[]> {
+  getAll(..._projection: string[]): Promise<Wine[]> {
     throw new Error();
   }
 
   @Insert("wine")
-  insertWines(wines: Wine[]): Promise<number> {
+  insert(_wines: Wine[]): Promise<number> {
+    throw new Error();
+  }
+
+  @Update("wine")
+  update(_wines: Wine[]): Promise<number> {
     throw new Error();
   }
 

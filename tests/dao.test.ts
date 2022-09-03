@@ -1,12 +1,7 @@
 import { assertEquals, Client } from "../deps.ts";
-import { initTables } from "../src/orm/annotations.ts";
+import { fields, initTables } from "../src/orm/annotations.ts";
 import { Bottle, Dao, TestDao, Wine } from "../src/orm/dao.ts";
 import { UpdateMass } from "../src/query/update-mass.ts";
-
-// TODO: add semi colon at end of query. RN its qury builder that's doing it.
-// TODO: refactor SELECT that now should include FROM as well
-// TODO: in UPDATE, use "as" instead of aliasTracker, bc now every field will have the "as" set
-// TODO: Pass optionnal where argument to SELECT, DELETE and UPDATE (where: { a: 1, and: { b: 2 } })
 
 const client = new Client(Deno.env.get("DATABASE_URL"));
 const wines = [
@@ -14,55 +9,61 @@ const wines = [
   { id: 2, name: "Nom", naming: "Riesling", isOrganic: false },
 ];
 
-Deno.test("Mass update", async () => {
+const updatedWines = [
+  { id: 1, name: "F. Engel", naming: "Pessac", isOrganic: false },
+  { id: 2, name: "Pouilly", naming: "Chianti", isOrganic: false },
+];
+
+Deno.test("Insert annotation", async () => {
   await initTables(Deno.env.get("DATABASE_URL") || "", [Wine, Bottle]);
-  const updateRaw = new UpdateMass("wine", wines);
+  const actual = await withClient(async () => {
+    await client.queryObject("DELETE FROM wine");
+    const dao = new TestDao(client);
+    return await dao.insert(wines);
+  });
 
-  const { queries, groupedPreparedValues } = updateRaw.getPreparedQueries();
-  assertEquals(queries, [
-    "UPDATE wine SET id = $1, name = $2, naming = $3, is_organic = $4 WHERE id = 1",
-    "UPDATE wine SET id = $1, name = $2, naming = $3, is_organic = $4 WHERE id = 2",
-  ]);
-
-  assertEquals(
-    groupedPreparedValues,
-    [[1, "Immelé", "Gewurtz", true], [2, "Nom", "Riesling", false]],
-  );
+  // Number of expected inserted rows
+  assertEquals(actual, 2);
 });
-
-Deno.test("Conditionnal mass update", async () => {
-  await initTables(Deno.env.get("DATABASE_URL") || "", [Wine, Bottle]);
-  const updateRaw = new UpdateMass("wine", wines);
-
-  const { queries, groupedPreparedValues } = updateRaw.getPreparedQueries();
-  assertEquals(queries, [
-    "UPDATE wine SET id = $1, name = $2, naming = $3, is_organic = $4 WHERE id = 1",
-    "UPDATE wine SET id = $1, name = $2, naming = $3, is_organic = $4 WHERE id = 2",
-  ]);
-
-  assertEquals(
-    groupedPreparedValues,
-    [[1, "Immelé", "Gewurtz", true], [2, "Nom", "Riesling", false]],
-  );
-});
-
-// Deno.test("Insert annotation", async () => {
-//   const actual = await withClient(async () => {
-//     const dao = new TestDao(client);
-//     return await dao.insertWines(wines);
-//   });
-
-//   // Number of expected inserted rows
-//   assertEquals(actual, 2);
-// });
 
 Deno.test("Select annotation", async () => {
   const actual = await withClient(async () => {
     const dao = new TestDao(client);
-    return await dao.getAllWines();
+    return await dao.getAll();
   });
 
   assertEquals(actual, wines);
+});
+
+// This test lives here and not in query.test.ts bc UpdateMass needs table initializaiton (to fetch PK) to work.
+Deno.test("Mass update without db", () => {
+  const updateRaw = new UpdateMass("wine", wines);
+
+  const { queries, groupedPreparedValues } = updateRaw.getPreparedQueries();
+  assertEquals(queries, [
+    "UPDATE wine SET id = $1, name = $2, naming = $3, is_organic = $4 WHERE id = 1",
+    "UPDATE wine SET id = $1, name = $2, naming = $3, is_organic = $4 WHERE id = 2",
+  ]);
+
+  assertEquals(
+    groupedPreparedValues,
+    [[1, "Immelé", "Gewurtz", true], [2, "Nom", "Riesling", false]],
+  );
+});
+
+Deno.test("Mass update with db", async () => {
+  const rowsUpdated = await withClient(async () => {
+    const dao = new TestDao(client);
+    return await dao.update(updatedWines);
+  });
+
+  const actual = await withClient(async () => {
+    const dao = new TestDao(client);
+    return await dao.getAll();
+  });
+
+  assertEquals(rowsUpdated, updatedWines.length);
+  assertEquals(actual, updatedWines);
 });
 
 // Deno.test("Query annotation", async () => {

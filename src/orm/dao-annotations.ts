@@ -79,18 +79,27 @@ export function Update(table: string) {
   ) {
     descriptor.value = async function (...args: any[]) {
       const client = assertClient(this);
-      const { queries, groupedPreparedValues } = new UpdateMass(table, args)
+      const { queries, groupedPreparedValues } = new UpdateMass(table, args[0])
         .getPreparedQueries();
 
       const t = client.createTransaction("transaction");
       let index = 0;
+      let rowsUpdated = 0;
+
+      console.log(queries);
       await t.begin();
 
       for (const query of queries) {
-        await t.queryObject(query, groupedPreparedValues[index++]);
+        const response = await t.queryObject(
+          query,
+          groupedPreparedValues[index++],
+        );
+
+        rowsUpdated += response.rowCount || 0;
       }
 
       await t.commit();
+      return rowsUpdated;
     };
 
     return descriptor;
