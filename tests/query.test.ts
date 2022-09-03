@@ -4,7 +4,7 @@ import { Create, Field } from "../src/query/create.ts";
 import { Insert } from "../src/query/insert.ts";
 import { Select } from "../src/query/select.ts";
 import { Update } from "../src/query/update.ts";
-import { Where } from "../src/query/where.ts";
+import { PreparedWhere, Where } from "../src/query/where.ts";
 
 Deno.test("Select all", () => {
   const select = new Select("wine").toText().text;
@@ -31,16 +31,43 @@ Deno.test("Where single equals int", () => {
 
 Deno.test("Where single equals string", () => {
   const conditions = { comment: "Hi mom!" };
-  const  text = new Where(conditions).toText().text;
+  const text = new Where(conditions).toText().text;
 
   assertEquals(text, "WHERE comment = 'Hi mom!';");
 });
 
 Deno.test("Where two equals AND", () => {
-  const conditions = new Where({ wine_id: 1, comment: "Hi mom!" })
+  const conditions = new Where({ wine_id: 1, comment: "Hi mom!" });
   const text = conditions.toText().text;
 
   assertEquals(text, "WHERE wine_id = 1 AND comment = 'Hi mom!';");
+});
+
+Deno.test("Where two equals OR", () => {
+  const conditions = new Where({ wine_id: 1, comment: "Hi mom!", or: true });
+  const text = conditions.toText().text;
+
+  assertEquals(text, "WHERE wine_id = 1 OR comment = 'Hi mom!';");
+});
+
+Deno.test("Where prepared args AND", () => {
+  const conditions = new PreparedWhere(["wine_id", "comment"], [1, "Hi mom!"]);
+  const { text, args } = conditions.toText();
+
+  assertEquals(text, "WHERE wine_id = $1 AND comment = $2;");
+  assertEquals(args, [1, "Hi mom!"]);
+});
+
+Deno.test("Where prepared args OR", () => {
+  const conditions = new PreparedWhere(
+    ["wine_id", "comment"],
+    [1, "Hi mom!"],
+    true,
+  );
+  const { text, args } = conditions.toText();
+
+  assertEquals(text, "WHERE wine_id = $1 OR comment = $2;");
+  assertEquals(args, [1, "Hi mom!"]);
 });
 
 Deno.test("Insert into", () => {
@@ -69,7 +96,13 @@ Deno.test("Create table", () => {
   const fields: Field[] = [
     { name: "id", type: "SERIAL", primaryKey: true, table: "", as: "id" },
     { name: "bottleId", type: "INT", as: "bottle_id", table: "" },
-    { name: "tasting_id", type: "INT", nullable: Nullable.YES, table: "", as: "tasting_id" },
+    {
+      name: "tasting_id",
+      type: "INT",
+      nullable: Nullable.YES,
+      table: "",
+      as: "tasting_id",
+    },
   ];
 
   const create = new Create("wine", fields);

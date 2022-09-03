@@ -1,26 +1,54 @@
 // The value can be of whatever type
 // deno-lint-ignore-file no-explicit-any
 
-import { PreparedQueryText, QueryPart } from "./query.ts";
+import { PreparedQueryText, QueryPart, QueryText } from "./query.ts";
 
 export interface WhereCondition {
   [field: string]: any;
   or?: boolean;
 }
 
+export interface PreparedWhereCondition {
+  fields: string[];
+  or?: boolean;
+}
+
 export class Where extends QueryPart {
   private conditions: WhereCondition;
-  private args: any[];
-  private prepared = false;
 
-  constructor(conditions: WhereCondition, ...preparedArgs: any[]) {
+  constructor(conditions: WhereCondition) {
     super();
     this.conditions = conditions;
-    this.args = preparedArgs;
+  }
 
-    if (preparedArgs.length > 0) {
-      this.prepared = true;
+  toText(): QueryText {
+    const actualCondition = [];
+    const or = this.conditions.or;
+    let text = `WHERE `;
+
+    // Will polute arg generation
+    delete this.conditions.or;
+
+    for (const [key, value] of Object.entries(this.conditions)) {
+      const val = isNaN(value as any) ? `'${value}'` : value;
+      actualCondition.push(`${key} = ${val}`);
     }
+
+    text += actualCondition.join(or ? " OR " : " AND ").concat(";");
+    return { text };
+  }
+}
+
+export class PreparedWhere extends QueryPart {
+  private readonly fields: string[];
+  private readonly args: any[];
+  private readonly or?: boolean;
+
+  constructor(fields: string[], args: any[], or?: boolean) {
+    super();
+    this.fields = fields;
+    this.args = args;
+    this.or = or;
   }
 
   toText(): PreparedQueryText {
@@ -28,20 +56,11 @@ export class Where extends QueryPart {
     let text = `WHERE `;
     let preparedArgsIndex = 1;
 
-    for (const [key, value] of Object.entries(this.conditions)) {
-      const val = this.prepared
-        ? `$${preparedArgsIndex++}`
-        : isNaN(value as any)
-        ? `'${value}'`
-        : value;
-
-      actualCondition.push(`${key} = ${val}`);
+    for (const field of this.fields) {
+      actualCondition.push(`${field} = $${preparedArgsIndex++}`);
     }
 
-    text += actualCondition.join(this.conditions.or ? " OR " : " AND ").concat(
-      ";",
-    );
-
+    text += actualCondition.join(this.or ? " OR " : " AND ").concat(";");
     return { text, args: this.args };
   }
 }
