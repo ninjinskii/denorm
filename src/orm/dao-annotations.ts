@@ -1,6 +1,7 @@
 import { Client } from "../../deps.ts";
 import { Insert as InsertQuery } from "../query/insert.ts";
 import { UpdateMass } from "../query/update-mass.ts";
+import { fields } from "./annotations.ts";
 import { Dao } from "./dao.ts";
 
 export function Select(table: string) {
@@ -12,7 +13,12 @@ export function Select(table: string) {
     descriptor.value = async function (...args: string[]) {
       const client = assertClient(this);
       const query = `SELECT * FROM ${table}`;
-      const result = await client.queryObject(query);
+      const names = fields
+        .filter((field) => field.table === table)
+        .map((field) => field.name);
+
+      console.log(names);
+      const result = await client.queryObject({ text: query, fields: names });
       return result.rows;
     };
 
@@ -81,8 +87,10 @@ export function Update(table: string) {
 
 function assertClient(context: any): Client {
   if ((context as Dao).client) {
-    return context.client
+    return context.client;
   } else {
-    throw new Error("@Select, @Insert, @Update, @Delete, should used inside a Dao class.")
+    throw new Error(
+      "@Select, @Insert, @Update, @Delete, should used inside a Dao class.",
+    );
   }
 }

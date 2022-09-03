@@ -7,8 +7,7 @@ import { UpdateMass } from "../src/query/update-mass.ts";
 // TODO: refactor SELECT that now should include FROM as well
 // TODO: try to remove the tableFields thign for Select queries. Automtaic support for multiple queries will no
 // longer be supported, but you can still do a @Query() with your special select
-// TODO: use the fields parameter in almost all queries at the postgres driver level.
-// This should avoid us doing weird stuff with aliases
+// TODO: in UPDATE, use "as" instead of aliasTracker, bc now every field will have the "as" set
 
 const client = new Client(Deno.env.get("DATABASE_URL"));
 const wines = [
@@ -32,15 +31,15 @@ Deno.test("Mass update", async () => {
   );
 });
 
-Deno.test("Insert annotation", async () => {
-  const actual = await withClient(async () => {
-    const dao = new TestDao(client);
-    return await dao.insertWines(wines);
-  });
+// Deno.test("Insert annotation", async () => {
+//   const actual = await withClient(async () => {
+//     const dao = new TestDao(client);
+//     return await dao.insertWines(wines);
+//   });
 
-  // Number of expected inserted rows
-  assertEquals(actual, 2);
-});
+//   // Number of expected inserted rows
+//   assertEquals(actual, 2);
+// });
 
 Deno.test("Select annotation", async () => {
   const actual = await withClient(async () => {
