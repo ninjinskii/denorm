@@ -10,11 +10,6 @@ const wines = [
   { id: 2, name: "Nom", naming: "Riesling", isOrganic: false },
 ];
 
-const wines_ = [
-  { id: 1, name: "Immelé", naming: "Gewurtz", is_organic: true },
-  { id: 2, name: "Nom", naming: "Riesling", is_organic: false },
-];
-
 const updatedWines = [
   { id: 1, name: "F. Engel", naming: "Pessac", isOrganic: false },
   { id: 2, name: "Pouilly", naming: "Chianti", isOrganic: false },
@@ -25,11 +20,11 @@ Deno.test("Insert annotation", async () => {
   const actual = await withClient(async () => {
     await client.queryObject("DELETE FROM wine");
     const dao = new TestDao(client, "wine");
-    await dao.insert(wines);
-    return await (await client.queryObject("SELECT * FROM wine")).rows;
+    return await dao.insert(wines);
   });
 
-  assertEquals(actual, wines_);
+  // Number of expected inserted rows
+  assertEquals(actual, 2);
 });
 
 Deno.test("Select annotation", async () => {
