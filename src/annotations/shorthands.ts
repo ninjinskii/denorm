@@ -49,11 +49,14 @@ export function Query(query: string, aliases?: string[]) {
   ) {
     descriptor.value = async function (...args: any[]) {
       const client = assertClient(this);
+      console.log(query);
+      console.log(aliases);
       const result = await client.queryObject({
         text: query,
         args,
         fields: aliases,
       });
+      console.log(result);
       return result.rows;
     };
 
