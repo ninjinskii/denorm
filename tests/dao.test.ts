@@ -1,8 +1,8 @@
 import { assertEquals, Client } from "../deps.ts";
 import { initTables } from "../src/orm/annotations.ts";
-import { Bottle, TestDao, Wine } from "../src/orm/dao.ts";
+import { Bottle, OtherDao, TestDao, Wine } from "../src/orm/dao.ts";
 import { Update } from "../src/query/update.ts";
-import { Where } from "../src/query/where.ts";
+import { transaction } from "../src/transaction/transaction.ts";
 
 // TODO:: remove alias tracker and update INSERT accordingly
 
@@ -72,7 +72,7 @@ Deno.test("Mass update with db", async () => {
 Deno.test("Delete annotation", async () => {
   const rowDeleted = await withClient(async () => {
     const dao = new TestDao(client);
-    return await dao.delete(new Where({ id: 1 }));
+    return await dao.delete();
   });
 
   const actual = await withClient(async () => {
@@ -91,6 +91,25 @@ Deno.test("Query annotation", async () => {
   });
 
   assertEquals(actual, [{ id: 2, name: "Pouilly", naming: "Ch" }]);
+});
+
+Deno.test("Transaction", async () => {
+  const actual = await withClient(async () => {
+    const dao = new TestDao(client);
+    const oDao = new OtherDao(client);
+
+    const success = await transaction([dao, oDao], async () => {
+      await dao.getWineById(2, 3);
+      await oDao.getAll();
+    });
+
+    await dao.getWineById(2, 3);
+    await oDao.getAll();
+
+    return success;
+  });
+
+  assertEquals(actual, true);
 });
 
 async function withClient<T>(block: () => Promise<T>) {

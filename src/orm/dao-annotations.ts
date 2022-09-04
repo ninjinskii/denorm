@@ -9,6 +9,7 @@ import { Update as UpdateQuery } from "../query/update.ts";
 import { PreparedWhere, Where } from "../query/where.ts";
 import { fields } from "./annotations.ts";
 import { Dao } from "./dao.ts";
+import { transaction } from "../transaction/transaction.ts";
 
 export function Select(table: string, where?: Where | PreparedWhere) {
   return function (
@@ -78,47 +79,42 @@ export function Update(table: string) {
     descriptor: PropertyDescriptor,
   ) {
     descriptor.value = async function (...args: any[]) {
-      const client = assertClient(this);
+      assertClient(this);
       const { queries, groupedPreparedValues } = new UpdateQuery(table, args[0])
         .getPreparedQueries();
 
-      const t = client.createTransaction("transaction");
       let index = 0;
       let rowsUpdated = 0;
 
-      await t.begin();
+      const ok = await transaction([this as Dao], async (t) => {
+        for (const query of queries) {
+          const response = await t.queryObject(
+            query,
+            groupedPreparedValues[index++],
+          );
 
-      for (const query of queries) {
-        const response = await t.queryObject(
-          query,
-          groupedPreparedValues[index++],
-        );
+          rowsUpdated += response.rowCount || 0;
+        }
+      });
 
-        rowsUpdated += response.rowCount || 0;
+      if (ok) {
+        return rowsUpdated;
+      } else {
+        throw new Error("An unknown error happened while updating objects");
       }
-
-      await t.commit();
-      return rowsUpdated;
     };
 
     return descriptor;
   };
 }
 
-export function Delete(table: string) {
+export function Delete(table: string, where: Where | PreparedWhere) {
   return function (
     _target: any,
     _propertyKey: string,
     descriptor: PropertyDescriptor,
   ) {
-    descriptor.value = async function (...args: string[]) {
-      if (!args[0]) {
-        throw new Error(
-          "Where without condition is too risky. If you really want to do so, use @Query('DELETE FROM <table>')",
-        );
-      }
-
-      const where = args[0] as unknown as Where;
+    descriptor.value = async function (..._args: string[]) {
       const client = assertClient(this);
       const _delete = new DeleteQuery(table).toText().text;
       const query = addWhere(_delete, where);
@@ -138,7 +134,7 @@ export function Delete(table: string) {
 
 function assertClient(context: any): Client {
   if ((context as Dao).client) {
-    return context.client;
+    return context.transaction || context.client;
   } else {
     throw new Error(
       "@Select, @Insert, @Update, @Delete, should used inside a Dao class.",

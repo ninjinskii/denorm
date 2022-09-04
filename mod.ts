@@ -1,3 +1,4 @@
+export { Client } from "./deps.ts";
 export { transaction } from "./src/transaction/transaction.ts";
 export { Dao } from "./src/orm/dao.ts";
 export {

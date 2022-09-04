@@ -1,10 +1,20 @@
-import { Client } from "../../deps.ts";
+import { Client, Transaction } from "../../deps.ts";
 import { Where } from "../query/where.ts";
 import { Entity, Field, Nullable, PrimaryKey } from "./annotations.ts";
 import { Delete, Insert, Query, Select, Update } from "./dao-annotations.ts";
 
 export class Dao {
-  public constructor(public client: Client) {
+  public transaction: Transaction | null = null;
+
+  public constructor(public client: Client | Transaction) {
+  }
+
+  onTransaction(t: Transaction) {
+    this.transaction = t;
+  }
+
+  onTransactionEnd() {
+    this.transaction = null;
   }
 }
 
@@ -24,8 +34,8 @@ export class TestDao extends Dao {
     throw new Error();
   }
 
-  @Delete("wine")
-  delete(_where: Where): Promise<number> {
+  @Delete("wine", new Where({ id: 1 }))
+  delete(): Promise<number> {
     throw new Error();
   }
 
@@ -36,6 +46,13 @@ export class TestDao extends Dao {
     _id: number,
     _max: number,
   ): Promise<{ id: number; name: string; naming: string }[]> {
+    throw new Error();
+  }
+}
+
+export class OtherDao extends Dao {
+  @Select("wine")
+  getAll(): Promise<Wine[]> {
     throw new Error();
   }
 }

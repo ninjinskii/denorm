@@ -3,7 +3,6 @@ import { Nullable } from "../src/orm/annotations.ts";
 import { Create, Field } from "../src/query/create.ts";
 import { Insert } from "../src/query/insert.ts";
 import { Select } from "../src/query/select.ts";
-import { Update } from "../src/query/update.ts";
 import { PreparedWhere, Where } from "../src/query/where.ts";
 
 Deno.test("Select all", () => {
