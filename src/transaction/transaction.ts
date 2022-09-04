@@ -1,5 +1,5 @@
 import { Client, Transaction } from "../../deps.ts";
-import { Dao } from "../orm/dao.ts";
+import { Dao } from "../annotations/dao.ts";
 
 export async function transaction(
   daos: Dao[],

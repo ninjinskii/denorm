@@ -1,7 +1,7 @@
 import { Client, Transaction } from "../../deps.ts";
 import { Where } from "../query/where.ts";
-import { Entity, Field, Nullable, PrimaryKey } from "./annotations.ts";
-import { Delete, Insert, Query, Select, Update } from "./dao-annotations.ts";
+import { Entity, Field, Nullable, PrimaryKey } from "./fields.ts";
+import { Delete, Insert, Query, Select, Update } from "./shorthands.ts";
 
 export class Dao {
   public transaction: Transaction | null = null;
@@ -25,7 +25,7 @@ export class TestDao extends Dao {
   }
 
   @Select("wine", new Where({ id: "°1" }))
-  getWineByDynamicId(id: number): Promise<Wine[]> {
+  getWineByDynamicId(_id: number): Promise<Wine[]> {
     throw new Error();
   }
 
@@ -33,7 +33,11 @@ export class TestDao extends Dao {
     "wine",
     new Where({ id: "°1", is_organic: false, name: "°2", naming: "°3" }),
   )
-  complexWhereQuery(id: number, name: string, naming: string): Promise<Wine[]> {
+  complexWhereQuery(
+    _id: number,
+    _name: string,
+    _naming: string,
+  ): Promise<Wine[]> {
     throw new Error();
   }
 

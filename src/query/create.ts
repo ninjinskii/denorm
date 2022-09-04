@@ -1,4 +1,4 @@
-import { Nullable } from "../orm/annotations.ts";
+import { Nullable } from "../annotations/fields.ts";
 import { QueryPart, QueryText } from "./query.ts";
 
 export interface Field {

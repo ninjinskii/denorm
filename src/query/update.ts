@@ -1,6 +1,6 @@
 // We want to be generic
 // deno-lint-ignore-file no-explicit-any
-import { fields } from "../orm/annotations.ts";
+import { fields } from "../annotations/fields.ts";
 
 // Give a list of objects directly, instead of field to modify
 export class Update {

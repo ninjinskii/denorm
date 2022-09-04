@@ -1,5 +1,5 @@
 import { assertEquals } from "../deps.ts";
-import { Nullable } from "../src/orm/annotations.ts";
+import { Nullable } from "../src/annotations/fields.ts";
 import { Create, Field } from "../src/query/create.ts";
 import { Insert } from "../src/query/insert.ts";
 import { Select } from "../src/query/select.ts";

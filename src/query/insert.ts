@@ -1,6 +1,6 @@
 // We will work a lot with any since we're trying to be as generic as possible to insert anything in the db.
 // deno-lint-ignore-file no-explicit-any
-import { aliasTracker } from "../orm/annotations.ts";
+import { aliasTracker } from "../annotations/fields.ts";
 import { PreparedQueryText, QueryPart } from "./query.ts";
 
 interface InsertValues {

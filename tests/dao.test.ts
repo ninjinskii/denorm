@@ -1,6 +1,6 @@
 import { assertEquals, Client } from "../deps.ts";
-import { initTables } from "../src/orm/annotations.ts";
-import { Bottle, OtherDao, TestDao, Wine } from "../src/orm/dao.ts";
+import { initTables } from "../src/annotations/fields.ts";
+import { Bottle, OtherDao, TestDao, Wine } from "../src/annotations/dao.ts";
 import { Update } from "../src/query/update.ts";
 import { transaction } from "../src/transaction/transaction.ts";
 

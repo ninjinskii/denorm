@@ -7,7 +7,7 @@ import { Select as SelectQuery } from "../query/select.ts";
 import { Delete as DeleteQuery } from "../query/delete.ts";
 import { Update as UpdateQuery } from "../query/update.ts";
 import { Where } from "../query/where.ts";
-import { fields } from "./annotations.ts";
+import { fields } from "./fields.ts";
 import { Dao } from "./dao.ts";
 import { transaction } from "../transaction/transaction.ts";
 
