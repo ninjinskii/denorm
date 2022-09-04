@@ -33,8 +33,6 @@ export function Select(table: string, where?: Where) {
         args: preparedArgs,
       });
 
-      console.log(result.query);
-
       return result.rows;
     };
 

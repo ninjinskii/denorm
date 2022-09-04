@@ -22,7 +22,6 @@ export async function transaction(
     await transaction.begin();
     await block(transaction);
   } catch (_error) {
-    console.log(_error);
     ok = false;
   } finally {
     await transaction.commit();
