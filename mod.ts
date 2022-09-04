@@ -1,6 +1,7 @@
 export { Client } from "./deps.ts";
 export { transaction } from "./src/transaction/transaction.ts";
 export { Dao } from "./src/annotations/dao.ts";
+export { Where } from "./src/query/where.ts"
 export {
   Entity,
   Field,
