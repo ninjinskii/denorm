@@ -4,8 +4,6 @@ import { Bottle, OtherDao, TestDao, Wine } from "../src/annotations/dao.ts";
 import { Update } from "../src/query/update.ts";
 import { transaction } from "../src/transaction/transaction.ts";
 
-// TODO:: semi colon at end of queries are weird (sometimes double, sometimes none, sometimes one)
-
 const client = new Client(Deno.env.get("DATABASE_URL"));
 const wines = [
   { id: 1, name: "Immelé", naming: "Gewurtz", isOrganic: true },
