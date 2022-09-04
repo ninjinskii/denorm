@@ -1,6 +1,6 @@
 // We will work a lot with any since we're trying to be as generic as possible to insert anything in the db.
 // deno-lint-ignore-file no-explicit-any
-import { aliasTracker } from "../annotations/fields.ts";
+import { fields } from "../annotations/fields.ts";
 import { PreparedQueryText, QueryPart } from "./query.ts";
 
 interface InsertValues {
@@ -42,21 +42,10 @@ export class Insert extends QueryPart {
         return key;
       }
 
-      const tableAliases = aliasTracker[this.tableName];
-
-      if (tableAliases) {
-        // We need a reverse lookup
-        for (const [_key, value] of Object.entries(tableAliases)) {
-          if (value === key) {
-            return _key;
-          }
-        }
-        
-        return key;
-      } else {
-        console.log(`Failed to get field ${key} in alias table`);
-        return key;
-      }
+      return fields.find((field) =>
+        field.table === this.tableName && field.name === key
+      )
+        ?.as || key;
     }).join(", ");
   }
 

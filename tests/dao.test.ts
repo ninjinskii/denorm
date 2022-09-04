@@ -4,7 +4,6 @@ import { Bottle, OtherDao, TestDao, Wine } from "../src/annotations/dao.ts";
 import { Update } from "../src/query/update.ts";
 import { transaction } from "../src/transaction/transaction.ts";
 
-// TODO:: remove alias tracker and update INSERT accordingly
 // TODO:: semi colon at end of queries are weird (sometimes double, sometimes none, sometimes one)
 
 const client = new Client(Deno.env.get("DATABASE_URL"));

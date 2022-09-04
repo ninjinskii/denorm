@@ -15,20 +15,7 @@ export enum Nullable {
   NO = "NOT NULL",
 }
 
-interface TableAliasTracker {
-  [tableName: string]: AliasTracker;
-}
-
-interface AliasTracker {
-  [fieldName: string]: string;
-}
-
 export const fields: Field[] = [];
-
-// Keep track of every fields that uses "as" to get correct mapping when
-// grabbing values out of db.
-// PS: not used if the model is not defined (no decorators)
-export const aliasTracker: TableAliasTracker = {};
 
 let initAlreadyCalled = false;
 
@@ -69,7 +56,6 @@ export async function initTables(client: Client, _types: any[]) {
       fieldByTable.push([]); // This empty array is a slot for next fields of this new table
       lastOf(fieldByTable)?.push(field);
     } else if (table) {
-      updateAliasTracker(field, table);
       lastOf(fieldByTable)?.push(field);
     }
   }
@@ -91,15 +77,6 @@ export async function initTables(client: Client, _types: any[]) {
 
   initAlreadyCalled = true;
   await client.end();
-}
-
-function updateAliasTracker(field: Field, table: string) {
-  if (table && field.as) {
-    if (!aliasTracker[table]) {
-      aliasTracker[table] = {};
-    }
-    aliasTracker[table][field.as] = field.name;
-  }
 }
 
 export function Entity(tableName: string) {
