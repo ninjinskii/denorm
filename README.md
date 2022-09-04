@@ -186,7 +186,7 @@ export class WineDao extends Dao implements RestDao<Wine> {
     throw new Error("");
   }
 
-  @Select("wine", new Where({ id: "$1" }))
+  @Select("wine", new Where({ id: "°1" }))
   getOne(id: number): Promise<Wine[]> {
     throw new Error("");
   }
