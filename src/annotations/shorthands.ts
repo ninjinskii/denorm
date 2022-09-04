@@ -41,7 +41,7 @@ export function Select(where?: Where) {
   };
 }
 
-export function Query(query: string) {
+export function Query(query: string, aliases?: string[]) {
   return function (
     _target: any,
     _propertyKey: string,
@@ -49,7 +49,11 @@ export function Query(query: string) {
   ) {
     descriptor.value = async function (...args: any[]) {
       const client = assertClient(this);
-      const result = await client.queryObject({ text: query, args });
+      const result = await client.queryObject({
+        text: query,
+        args,
+        fields: aliases,
+      });
       return result.rows;
     };
 
