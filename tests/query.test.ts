@@ -3,7 +3,7 @@ import { Nullable } from "../src/orm/annotations.ts";
 import { Create, Field } from "../src/query/create.ts";
 import { Insert } from "../src/query/insert.ts";
 import { Select } from "../src/query/select.ts";
-import { PreparedWhere, Where } from "../src/query/where.ts";
+import { Where } from "../src/query/where.ts";
 
 Deno.test("Select all", () => {
   const select = new Select("wine").toText().text;
@@ -23,46 +23,30 @@ Deno.test("Select multiple fields", () => {
 
 Deno.test("Where single equals int", () => {
   const conditions = { wine_id: 1 };
-  const text = new Where(conditions).toText().text;
+  const { text, args } = new Where(conditions).toText();
 
-  assertEquals(text, "WHERE wine_id = 1;");
+  assertEquals(text, "WHERE wine_id = $1;");
+  assertEquals(args, [1]);
 });
 
 Deno.test("Where single equals string", () => {
   const conditions = { comment: "Hi mom!" };
-  const text = new Where(conditions).toText().text;
+  const { text, args } = new Where(conditions).toText();
 
-  assertEquals(text, "WHERE comment = 'Hi mom!';");
+  assertEquals(text, "WHERE comment = $1;");
+  assertEquals(args, ["Hi mom!"]);
 });
 
 Deno.test("Where two equals AND", () => {
   const conditions = new Where({ wine_id: 1, comment: "Hi mom!" });
-  const text = conditions.toText().text;
-
-  assertEquals(text, "WHERE wine_id = 1 AND comment = 'Hi mom!';");
-});
-
-Deno.test("Where two equals OR", () => {
-  const conditions = new Where({ wine_id: 1, comment: "Hi mom!", or: true });
-  const text = conditions.toText().text;
-
-  assertEquals(text, "WHERE wine_id = 1 OR comment = 'Hi mom!';");
-});
-
-Deno.test("Where prepared args AND", () => {
-  const conditions = new PreparedWhere(["wine_id", "comment"], [1, "Hi mom!"]);
   const { text, args } = conditions.toText();
 
   assertEquals(text, "WHERE wine_id = $1 AND comment = $2;");
   assertEquals(args, [1, "Hi mom!"]);
 });
 
-Deno.test("Where prepared args OR", () => {
-  const conditions = new PreparedWhere(
-    ["wine_id", "comment"],
-    [1, "Hi mom!"],
-    true,
-  );
+Deno.test("Where two equals OR", () => {
+  const conditions = new Where({ wine_id: 1, comment: "Hi mom!" }, true);
   const { text, args } = conditions.toText();
 
   assertEquals(text, "WHERE wine_id = $1 OR comment = $2;");

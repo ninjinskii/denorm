@@ -69,6 +69,15 @@ Deno.test("Mass update with db", async () => {
   assertEquals(actual, updatedWines);
 });
 
+Deno.test("Dynamic parameter binding WHERE", async () => {
+  const actual = await withClient(async () => {
+    const dao = new TestDao(client);
+    return await dao.getWineByDynamicId(1);
+  });
+
+  assertEquals(actual[0], updatedWines[0]);
+});
+
 Deno.test("Delete annotation", async () => {
   const rowDeleted = await withClient(async () => {
     const dao = new TestDao(client);

@@ -24,6 +24,11 @@ export class TestDao extends Dao {
     throw new Error();
   }
 
+  @Select("wine", new Where({ id: "°1" }))
+  getWineByDynamicId(id: number): Promise<Wine[]> {
+    throw new Error();
+  }
+
   @Insert("wine")
   insert(_wines: Wine[]): Promise<number> {
     throw new Error();

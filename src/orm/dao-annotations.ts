@@ -6,19 +6,20 @@ import { Insert as InsertQuery } from "../query/insert.ts";
 import { Select as SelectQuery } from "../query/select.ts";
 import { Delete as DeleteQuery } from "../query/delete.ts";
 import { Update as UpdateQuery } from "../query/update.ts";
-import { PreparedWhere, Where } from "../query/where.ts";
+import { Where } from "../query/where.ts";
 import { fields } from "./annotations.ts";
 import { Dao } from "./dao.ts";
 import { transaction } from "../transaction/transaction.ts";
 
-export function Select(table: string, where?: Where | PreparedWhere) {
+export function Select(table: string, where?: Where) {
   return function (
     _target: any,
     _propertyKey: string,
     descriptor: PropertyDescriptor,
   ) {
-    descriptor.value = async function (..._args: string[]) {
+    descriptor.value = async function (...args: string[]) {
       const client = assertClient(this);
+      bindWhereParameters(args, where);
       const select = new SelectQuery(table).toText().text;
       const query = addWhere(select, where);
       const preparedArgs = where ? where.toText().args : [];
@@ -31,6 +32,8 @@ export function Select(table: string, where?: Where | PreparedWhere) {
         fields: names,
         args: preparedArgs,
       });
+
+      console.log(result.query);
 
       return result.rows;
     };
@@ -108,7 +111,7 @@ export function Update(table: string) {
   };
 }
 
-export function Delete(table: string, where: Where | PreparedWhere) {
+export function Delete(table: string, where: Where) {
   return function (
     _target: any,
     _propertyKey: string,
@@ -142,11 +145,24 @@ function assertClient(context: any): Client {
   }
 }
 
-function addWhere(base: string, where?: Where | PreparedWhere) {
+function addWhere(base: string, where?: Where) {
   if (where) {
     const noTrailingSemiColon = base.slice(0, -1);
     return `${noTrailingSemiColon} ${where.toText().text};`;
   }
 
   return base;
+}
+
+function bindWhereParameters(args: any[], where?: Where) {
+  if (!where) {
+    return;
+  }
+
+  for (const [key, value] of Object.entries(where.conditions)) {
+    if (typeof value === "string" && value.match(/°[1-9]{1,2}/g)) {
+      const position = parseInt(value.substring(1));
+      where.conditions[key] = args[position - 1];
+    }
+  }
 }
