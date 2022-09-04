@@ -5,6 +5,7 @@ import { Update } from "../src/query/update.ts";
 import { transaction } from "../src/transaction/transaction.ts";
 
 // TODO:: remove alias tracker and update INSERT accordingly
+// TODO:: semi colon at end of queries are weird (sometimes double, sometimes none, sometimes one)
 
 const client = new Client(Deno.env.get("DATABASE_URL"));
 const wines = [
@@ -73,6 +74,15 @@ Deno.test("Dynamic parameter binding WHERE", async () => {
   const actual = await withClient(async () => {
     const dao = new TestDao(client);
     return await dao.getWineByDynamicId(1);
+  });
+
+  assertEquals(actual[0], updatedWines[0]);
+});
+
+Deno.test("Complex dynamic parameter binding WHERE", async () => {
+  const actual = await withClient(async () => {
+    const dao = new TestDao(client);
+    return await dao.complexWhereQuery(1, "F. Engel", "Pessac");
   });
 
   assertEquals(actual[0], updatedWines[0]);

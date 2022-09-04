@@ -29,6 +29,14 @@ export class TestDao extends Dao {
     throw new Error();
   }
 
+  @Select(
+    "wine",
+    new Where({ id: "°1", is_organic: false, name: "°2", naming: "°3" }),
+  )
+  complexWhereQuery(id: number, name: string, naming: string): Promise<Wine[]> {
+    throw new Error();
+  }
+
   @Insert("wine")
   insert(_wines: Wine[]): Promise<number> {
     throw new Error();
