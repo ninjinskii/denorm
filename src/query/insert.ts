@@ -18,6 +18,7 @@ export class Insert extends QueryPart {
     this.tableName = tableName;
     this.objects = objects;
     this.noAliasLookup = noAliasLookup || false;
+    console.log(fields)
 
     if (this.objects.length === 0) {
       throw new Error("Insert cannot be empty");
@@ -26,6 +27,7 @@ export class Insert extends QueryPart {
 
   toText(): PreparedQueryText {
     const fields = this.extractFields();
+    console.log(fields);
     const { values, preparedValues } = this.extractValues();
     const args = values;
     const text =
