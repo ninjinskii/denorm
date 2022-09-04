@@ -84,6 +84,8 @@ All shorthands will ask you for a table name as first parameter.
 Some of them can take an optionnal where parameter, which can only check single or multiple fields equality.
 For more complex queries, use @Query described below.
 
+#### SELECT
+
 ```ts
 // Select all wines
 @Select("wine") // Pass the table name as argument
@@ -100,7 +102,16 @@ getWineById(_id: number, _name: string): Promise<Wine[]> {
 }
 ```
 
-> If you have to make queries with unsafe values (e.g. user inputs), you can use PreparedWhere() instead of Where().
+Dynamic parameters binding can be done by setting the value `"°<one-based index of parameter in function>"` to your condition.
+For instance:
+
+```ts
+@Select("wine", new Where({ isOrganic: true, name: "°1" })) 
+getOrganicWinesForName(_name: string): Promise<Wine[]> {
+}
+```
+
+#### INSERT
 
 ```ts
 @Insert("wine")
@@ -109,12 +120,16 @@ insertWines(_wines: Wine[]): Promise<number> { // Returns number of inserted row
 }
 ```
 
+#### UPDATE
+
 ```ts
 @Update("wine")
 updateWines(_wines: Wine[]): Promise<number> { // Returns number of rows affected
   throw new Error("");
 }
 ```
+
+#### WHERE
 
 ```ts
 @Delete("wine", new Where({ id: 1 })) // Returns number of deleted rows. Where is mandatory for Delete shorthand.
@@ -137,6 +152,8 @@ For more complex queries, see @Query():
 
 > Note that whatever query you will write inside @Query(), the function will always return an Array.
 > This array will be filled with resutlts in case of a SELECT statement.
+
+> Also, note that the parameters will automatically be binded. Parameters naming in WHERE is not necessary here.
 
 ## Transactions
 To begin a transaction, call `transaction()` passing the list of DAOs needed, and a function.
