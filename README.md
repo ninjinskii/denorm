@@ -1,6 +1,6 @@
 # DenORM
 Depedency-limited Deno ORM for PostgreSQL. Allow you to build relativly simple queries.
-Welle-suited for REST apis.
+Well-suited for REST apis.
 
 Low chance to let you down in production because of unavailable depedencies.
 
@@ -10,10 +10,6 @@ Only 2 deps:
 
 
 ## ORM
-If you want to do an automatic mapping between your model objects and your database fields, you'll have to annotate your classes.
-You __are not__ forced to do this if you already have a running production database and your server doesn't need to modify objects
-a lot when coming out of the databse (e.g. in a REST api). You wouldn't event need to create the model objects.
-
 <b>What you will need for the ORM</b>
 * Add decorators to your model class
 * Create DAOs
@@ -76,13 +72,15 @@ await initTables(databaseUrl, [Wine, MyOtherModel])
 
 ## Query the database
 If you're building a REST api, take a look at the dedicated section below.
-To do basic queries you can use annoatations shorthands:
+To do basic queries you can use annotations shorthands:
 
 ### Shorthands
 Shorthands allows you to make the base CRUD queries as easy as an annotation.
 All shorthands will ask you for a table name as first parameter.
 Some of them can take an optionnal where parameter, which can only check single or multiple fields equality.
-For more complex queries, use @Query described below.
+For more complex queries, use `@Query` described below.
+
+> For the sake of brevity, Dao class is not represented in the next examples. But remember that shorthands decorator needs to be called inside a Dao.
 
 #### SELECT
 
@@ -129,7 +127,7 @@ updateWines(_wines: Wine[]): Promise<number> { // Returns number of rows affecte
 }
 ```
 
-#### WHERE
+#### DELETE
 
 ```ts
 @Delete("wine", new Where({ id: 1 })) // Returns number of deleted rows. Where is mandatory for Delete shorthand.
@@ -139,7 +137,7 @@ delete(): Promise<number> {
 ```
 
 ### @Query()
-For more complex queries, see @Query():
+For more complex queries, see `@Query`:
 ```ts
 @Query("SELECT id, name, SUBSTR(naming, 0, $2) AS naming FROM wine WHERE id = $1")
   getWineById(
@@ -184,17 +182,17 @@ Create one DAO per collection, implementing RestDao.
 ```ts
 export class WineDao extends Dao implements RestDao<Wine> {
   @Select("wine")
-  get(): Promise<T[]> {
+  get(): Promise<Wine[]> {
     throw new Error("");
   }
 
   @Select("wine", new Where({ id: "$1" }))
-  getOne(id: number): Promise<T[]> {
+  getOne(id: number): Promise<Wine[]> {
     throw new Error("");
   }
 
   @Insert("wine")
-  put(): Promise<T[]> {
+  put(): Promise<number> {
     throw new Error("");
   }
   ...
