@@ -148,7 +148,7 @@ function assertClient(context: any): Client {
 function addWhere(base: string, where?: Where) {
   if (where) {
     const noTrailingSemiColon = base.slice(0, -1);
-    return `${noTrailingSemiColon} ${where.toText().text};`;
+    return `${noTrailingSemiColon} ${where.toText().text}`;
   }
 
   return base;
