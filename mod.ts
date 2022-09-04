@@ -1,5 +1,6 @@
-export { QueryBuilder } from "./src/query/query-builder.ts";
+export { Client } from "./deps.ts";
 export { transaction } from "./src/transaction/transaction.ts";
+export { Dao } from "./src/annotations/dao.ts";
 export {
   Entity,
   Field,
@@ -7,4 +8,12 @@ export {
   Nullable,
   PrimaryKey,
   SizedField,
-} from "./src/orm/annotations.ts";
+} from "./src/annotations/fields.ts";
+
+export {
+  Delete,
+  Insert,
+  Query,
+  Select,
+  Update,
+} from "./src/annotations/shorthands.ts";

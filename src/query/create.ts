@@ -1,12 +1,13 @@
-import { Nullable } from "../orm/annotations.ts";
+import { Nullable } from "../annotations/fields.ts";
 import { QueryPart, QueryText } from "./query.ts";
 
 export interface Field {
   type: Type;
   name: string;
+  table: string
+  as: string;
   primaryKey?: boolean;
   size?: number;
-  as?: string;
   nullable?: Nullable;
 }
 
@@ -59,8 +60,7 @@ export class Create extends QueryPart {
 
       fieldsText.push(text);
     }
-
     const text = `${start}${fieldsText.join(", ")}${end}`;
-    return { text, affectedTables: [this.tableName] };
+    return { text };
   }
 }

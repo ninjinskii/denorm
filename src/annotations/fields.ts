@@ -1,59 +1,50 @@
 // Ultra generic annotations, we expect weird type
 // deno-lint-ignore-file no-explicit-any ban-types
+import { Client } from "../../deps.ts";
 import { Create, Field, SizeableType, Type } from "../query/create.ts";
-import { QueryExecutor } from "../query/query-executor.ts";
+
+// How does the annotation system works:
+// When referencing a type, like we do in initTables(databaseUrl, Wine, Bottle),
+// all annotations of every class runs.
+// First, member annotations, then class annotation, then proceed to the next type.
+// Each fields will be placed in `fields` array, with a placeholder on the table.
+// Then, class annotation (@Entity) will look for these placeholders and replace them with the actual table name.
 
 export enum Nullable {
   YES = "NULLABLE",
   NO = "NOT NULL",
 }
 
-interface TableAliasTracker {
-  [tableName: string]: AliasTracker;
-}
+export const fields: Field[] = [];
 
-interface AliasTracker {
-  [fieldName: string]: string;
-}
+let initAlreadyCalled = false;
 
-interface TableSeparator {
-  tableName: string;
-}
-
-const fields: Array<Field | TableSeparator> = [];
-
-// Keep track of every fields that uses "as" to get correct mapping when
-// grabbing values out of db.
-// PS: not used if the model is not defined (no decorators)
-export const aliasTracker: TableAliasTracker = {};
-
-export async function initTables(databaseUrl: string, _types: any[]) {
+export async function initTables(client: Client, _types: any[]) {
   // We wont use the types, but we need them to be evaluated.
   // Evaluating the type will trigger model's annotations
   // without us having to provide an instance of model
   // and describing fake parameters (e.g new Wine("", "", 1, ""))
   // to comply with TS type checks
+  if (initAlreadyCalled) {
+    throw new Error("Cannot call initTables() multiple times");
+  }
 
-  console.log(fields)
-  console.log(aliasTracker)
-
-  const executor = new QueryExecutor(databaseUrl);
-  await executor["init"]();
+  await client.connect();
 
   const fieldByTable: Array<Field[]> = [];
   const tableNames: string[] = [];
   let hasPrimaryKey = true;
 
   for (const field of fields) {
-    const name = (field as TableSeparator).tableName;
-    const primaryKey = (field as Field).primaryKey;
+    const primaryKey = field.primaryKey;
     const table = lastOf(tableNames);
 
     if (primaryKey) {
       hasPrimaryKey = true;
     }
 
-    if (name) {
+    const newTable = lastOf(tableNames) !== field.table;
+    if (newTable) {
       if (!hasPrimaryKey) {
         throw new Error(
           `Table "${table}" has no primary key, use @PrimaryKey on a property.`,
@@ -61,17 +52,18 @@ export async function initTables(databaseUrl: string, _types: any[]) {
       }
 
       hasPrimaryKey = false; // Switch table. So we want to look for a new PK
-      tableNames.push(name);
+      tableNames.push(field.table);
       fieldByTable.push([]); // This empty array is a slot for next fields of this new table
+      lastOf(fieldByTable)?.push(field);
     } else if (table) {
-      const actualField = field as Field;
-      updateAliasTracker(actualField, table);
-      lastOf(fieldByTable)?.push(field as Field);
+      lastOf(fieldByTable)?.push(field);
     }
   }
 
   // Most likely, developer missed a class annotation
-  if (tableNames.length !== fieldByTable.length) {
+  if (
+    tableNames.length !== fieldByTable.length || fieldByTable[0].length === 0
+  ) {
     throw new Error(
       "Cannot create tables. Did you add @Entity to all your model classes?",
     );
@@ -80,25 +72,18 @@ export async function initTables(databaseUrl: string, _types: any[]) {
   for (const [index, fields] of fieldByTable.entries()) {
     const tableName = tableNames[index];
     const query = new Create(tableName, fields).toText();
-    await executor.submitQuery(query);
+    await client.queryObject(query);
   }
 
-  await executor["client"]?.end();
-}
-
-function updateAliasTracker(field: Field, table: string) {
-  if (table && field.as) {
-    if (!aliasTracker[table]) {
-      aliasTracker[table] = {};
-    }
-    aliasTracker[table][field.as] = field.name;
-  }
+  initAlreadyCalled = true;
+  await client.end();
 }
 
 export function Entity(tableName: string) {
   return function (_constructor: Function) {
-    console.log(`Running entity ${tableName}`);
-    fields.unshift({ tableName });
+    fields
+      .filter((field) => field.table === "")
+      .forEach((field) => field.table = tableName);
   };
 }
 
@@ -168,11 +153,8 @@ function processAnnotation(
   const name = Object.keys(new target())[parameterIndex];
 
   const primaryKey = isPrimaryKey || undefined;
-  const field = { type, primaryKey, as, nullable, name, size };
-
-  // if (as) {
-  //   aliasTracker[aliasTracker.length - 1][as] = name;
-  // }
+  const _as = as || name;
+  const field = { type, primaryKey, as: _as, nullable, name, size, table: "" };
 
   // Note that last parameters annotation's runs first
   fields.unshift(field);

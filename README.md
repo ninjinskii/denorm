@@ -1,5 +1,6 @@
 # DenORM
 Depedency-limited Deno ORM for PostgreSQL. Allow you to build relativly simple queries.
+Well-suited for REST apis.
 
 Low chance to let you down in production because of unavailable depedencies.
 
@@ -7,19 +8,14 @@ Only 2 deps:
 * https://deno.land/x/postgres/mod.ts
 * https://deno.land/std@0.137.0/testing/asserts.ts;
 
-## Usage
-You can use this library as an ORM or simply as a query builder if you don't need to do a lot of data objects manipulation.
 
-### ORM
-If you want to do an automatic mapping between your model objects and your database fields, you'll have to annotate your classes.
-You __are not__ forced to do this if you already have a running production database and your server doesn't need to modify objects
-a lot when coming out of the databse (e.g. in a REST api). You wouldn't event need to create the model objects.
-
+## ORM
 <b>What you will need for the ORM</b>
 * Add decorators to your model class
+* Create DAOs
 * Call `initTable()` before instanting any of the model classes (or referencing their types)
 
-Here is an example:
+### Add decorators to your model class
 
 ```ts
 import { Entity... } from "https://raw.githubusercontent.com/ninjinskii/denorm/master/mod.ts"
@@ -36,83 +32,174 @@ export class MyModel {
 }
 ```
 
-```
-@Entity(tableName: string) - Will mark your class to be mapped in your DB, bearing the provided name.
-@PrimaryKey(type: string, as?: string) - Will mark the property as your primary key with the provided type. If set, `as` your field will take that name in the database.
-@Field(type: string, nullable?: NULLABLE, as?: string) - Will mark the property as a standard field, with the provided type.
-@SizedField(type: string, size?: int, nullable?: NULLABLE, as?: string) - Will mark the property as a standard field, with the provided type and size (e.g; VARCHAR(255)).
+```ts
+@Entity(tableName: string) // Will mark your class to be mapped in your DB, bearing the provided name.
+@PrimaryKey(type: string, as?: string) // Will mark the property as your primary key with the provided type. If set, `as` your field will take that name in the database.
+@Field(type: string, nullable?: NULLABLE, as?: string) // Will mark the property as a standard field, with the provided type.
+@SizedField(type: string, size?: int, nullable?: NULLABLE, as?: string) // Will mark the property as a standard field, with the provided type and size (e.g; VARCHAR(255)).
 ```
 
+### Create DAOs
 
-Then you'll need to init the tables like so:  
+Daos will be your entry point for querying data.
+You need to pass an instance of PostgresClient to the DAO constructor.
+See: https://deno-postgres.com/#/?id=connecting-to-your-db for more details on that.
+
+```ts
+import { Dao, Client, Select } from "https://raw.githubusercontent.com/ninjinskii/denorm/master/mod.ts"
+
+export class WineDao extends Dao {
+  @Select("wine") // Pass the table name as argument
+  function getAllWines(): Promise<Wine[]> { // Set the return type that coresponds to the fetched data
+    throw new Error(""); // The error will never be trigerred, but we throw it to avoid linter complaints.
+  }
+}
+
+const client = new Client(databaseUrl);
+const dao = new WineDao();
+
+```
+
+### Call `initTables()` 
 
 > __IMPORTANT NOTE:__
 Run `initTables()` before trying to instantiate any of your model objects or even referencing the type, as it will break the annotation system.
 ```ts
 import { initTables } from "https://raw.githubusercontent.com/ninjinskii/denorm/master/mod.ts"
 
-await initTables(databaseUrl, [MyModel, MyOtherModel])
+await initTables(databaseUrl, [Wine, MyOtherModel])
 ```
 
-### Query the database
-Otherwise, you can use only the query builder part.
-You don't need to setup the decorators and call `initTables()` if your database already exists.
+## Query the database
+If you're building a REST api, take a look at the dedicated section below.
+To do basic queries you can use annotations shorthands:
+
+### Shorthands
+Shorthands allows you to make the base CRUD queries as easy as an annotation.
+All shorthands will ask you for a table name as first parameter.
+Some of them can take an optionnal where parameter, which can only check single or multiple fields equality.
+For more complex queries, use `@Query` described below.
+
+> For the sake of brevity, Dao class is not represented in the next examples. But remember that shorthands decorator needs to be called inside a Dao.
+
+#### SELECT
 
 ```ts
-import { QueryBuilder } from "https://raw.githubusercontent.com/ninjinskii/denorm/master/mod.ts"
-
-// Select
-const builder = new QueryBuilder(databaseUrl);
-const select = await builder
-      .select("*") // .select("field1", "field2") - .select("table1.field1", "table_2.field2")
-      .from("table1") // .from("table1", "table2")
-      .where({ field: "comment", equals: "Hi mom!" }) // { field: "comment", equals: "whatever", chain: true } - Chain will couple the next AND & OR operator
-      .or({ field: "count", sup: 5})
-      .execute()
-      
-// Insert
-// Note that you can reuse the same builder instance after calling execute()
-await builder
-      .insert("table1", [
-        { id: 1, comment: "" },
-        { id: 2, comment: "" },
-      ])
-      .execute();
-      
-      
-// Update
-await builder
-      .update("table1", { id: 3, name: "hello" })
-      .where({ field: "id", equals: 1 })
-      .execute();
-      
-// Delete
-await builder
-      .delete()
-      .from("table_1")
+// Select all wines
+@Select("wine") // Pass the table name as argument
+getAllWines(): Promise<Wine[]> { // Set the return type that coresponds to the fetched data
+  throw new Error(""); // The error will never be trigerred, but we throw it to avoid linter complaints.
+}
 ```
 
-To simulate parenthesis around some AND or OR clause, you can pass nothing to the `where()` function
-and use `and()` & `or()` using arrays. An array of `and()` will be placed inside parenthese
+You can make some slightly more complex select using the where parameter (allows only the "=" operator):
+```ts
+// Select object by id
+@Select("wine", new Where({ id: 1, name: "Riesling" })) // Pass where as argument.
+getWineById(_id: number, _name: string): Promise<Wine[]> {
+}
+```
+
+Dynamic parameters binding can be done by setting the value `"°<one-based index of parameter in function>"` to your condition.
+For instance:
 
 ```ts
-  // WHERE (hello = hi AND age < 5)
+@Select("wine", new Where({ isOrganic: true, name: "°1" })) 
+getOrganicWinesForName(_name: string): Promise<Wine[]> {
+}
+```
+
+#### INSERT
+
+```ts
+@Insert("wine")
+insertWines(_wines: Wine[]): Promise<number> { // Returns number of inserted rows
+  throw new Error(""); // The error will never be trigerred, but we throw it to avoid linter complaints.
+}
+```
+
+#### UPDATE
+
+```ts
+@Update("wine")
+updateWines(_wines: Wine[]): Promise<number> { // Returns number of rows affected
+  throw new Error("");
+}
+```
+
+#### DELETE
+
+```ts
+@Delete("wine", new Where({ id: 1 })) // Returns number of deleted rows. Where is mandatory for Delete shorthand.
+delete(): Promise<number> {
+  throw new Error("");
+}
+```
+
+### @Query()
+For more complex queries, see `@Query`:
+```ts
+@Query("SELECT id, name, SUBSTR(naming, 0, $2) AS naming FROM wine WHERE id = $1")
+  getWineById(
+    _id: number,  // $1
+    _max: number, // $2
+  ): Promise<{ id: number; name: string; naming: string }[]> {
+    throw new Error();
+  }
+```
+
+> Note that whatever query you will write inside @Query(), the function will always return an Array.
+> This array will be filled with resutlts in case of a SELECT statement.
+
+> Also, note that the parameters will automatically be binded. Parameters naming in WHERE is not necessary here.
+
+## Transactions
+To begin a transaction, call `transaction()` passing the list of DAOs needed, and a function.
+```ts
+import { transaction } from "https://raw.githubusercontent.com/ninjinskii/denorm/master/mod.ts"
+
+
+const success: boolean = await transaction([dao], async () => {
+  // Place all your queries here, e.g. dao.getAllWines(); dao2.getAllThing();
+});
+```
+
+## Advices for REST apis
+Make an interface that allows you to treat all DAOs as the same entity:
+
+```ts
+export interface RestDao<T> {
+  get(): Promise<T[]>
+  getOne(id: number): Promise<T[]>
+  put(objects: T[]): Promise<number>
+  patch(objects: T[]): Promise<number>
+  delete(objects: T[]): Promise<number>
   ...
-  where().and([{ field: "hello", equals: "hi"}, { field: "age", inf: 5}])
-  // WHERE (hello = hi AND age < 5) OR age > 30 OR age = 32
-  where().and([{ field: "hello", equals: "hi"}, { field: "age", inf: 5}])
-      .or({field: "age", sup: 30})
-      .or({field: "age", equals: 32})
+}
 ```
+Create one DAO per collection, implementing RestDao.
 
-### Transactions
 ```ts
-import { QueryBuilder, transaction } from "https://raw.githubusercontent.com/ninjinskii/denorm/master/mod.ts"
+export class WineDao extends Dao implements RestDao<Wine> {
+  @Select("wine")
+  get(): Promise<Wine[]> {
+    throw new Error("");
+  }
 
-const success: boolean = await transaction(builder, async() => {
-  // Do your transaction queries here
-})
+  @Select("wine", new Where({ id: "°1" }))
+  getOne(id: number): Promise<Wine[]> {
+    throw new Error("");
+  }
+
+  @Insert("wine")
+  put(): Promise<number> {
+    throw new Error("");
+  }
+  ...
+}
 ```
+
+Then you can create a mapping between your routes and your DAOs, and have a single function to execute all collections actions.
 
 ## Run the project locally
 ```bash
@@ -122,5 +209,5 @@ docker-compose up -d
 ## Run tests
 ```bash
 docker-compose up -d
-docker-compose exec web deno test --allow-env --allow-net --allow-read /tests
+docker-compose exec web deno test --allow-env --allow-net --allow-read tests
 ```
