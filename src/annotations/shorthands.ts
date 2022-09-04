@@ -11,7 +11,7 @@ import { fields } from "./fields.ts";
 import { Dao } from "./dao.ts";
 import { transaction } from "../transaction/transaction.ts";
 
-export function Select(table: string, where?: Where) {
+export function Select(where?: Where) {
   return function (
     _target: any,
     _propertyKey: string,
@@ -19,6 +19,7 @@ export function Select(table: string, where?: Where) {
   ) {
     descriptor.value = async function (...args: string[]) {
       const client = assertClient(this);
+      const table = (this as Dao).tableName;
       bindWhereParameters(args, where);
       const select = new SelectQuery(table).toText().text;
       const query = addWhere(select, where);
@@ -56,7 +57,7 @@ export function Query(query: string) {
   };
 }
 
-export function Insert(table: string) {
+export function Insert() {
   return function (
     _target: any,
     _propertyKey: string,
@@ -64,6 +65,7 @@ export function Insert(table: string) {
   ) {
     descriptor.value = async function (args: any[]) {
       const client = assertClient(this);
+      const table = (this as Dao).tableName;
       const query = new InsertQuery(table, args).toText();
       const result = await client.queryObject(query);
       return result.rowCount || 0; // Number of row inserted
@@ -73,7 +75,7 @@ export function Insert(table: string) {
   };
 }
 
-export function Update(table: string) {
+export function Update() {
   return function (
     _target: any,
     _propertyKey: string,
@@ -81,6 +83,7 @@ export function Update(table: string) {
   ) {
     descriptor.value = async function (...args: any[]) {
       assertClient(this);
+      const table = (this as Dao).tableName;
       const { queries, groupedPreparedValues } = new UpdateQuery(table, args[0])
         .getPreparedQueries();
 
@@ -109,7 +112,7 @@ export function Update(table: string) {
   };
 }
 
-export function Delete(table: string, where: Where) {
+export function Delete(where: Where) {
   return function (
     _target: any,
     _propertyKey: string,
@@ -117,6 +120,7 @@ export function Delete(table: string, where: Where) {
   ) {
     descriptor.value = async function (..._args: string[]) {
       const client = assertClient(this);
+      const table = (this as Dao).tableName;
       const _delete = new DeleteQuery(table).toText().text;
       const query = addWhere(_delete, where);
       const preparedArgs = where.toText().args;

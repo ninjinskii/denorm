@@ -19,7 +19,7 @@ Deno.test("Insert annotation", async () => {
   await initTables(client, [Wine, Bottle]);
   const actual = await withClient(async () => {
     await client.queryObject("DELETE FROM wine");
-    const dao = new TestDao(client);
+    const dao = new TestDao(client, "wine");
     return await dao.insert(wines);
   });
 
@@ -29,7 +29,7 @@ Deno.test("Insert annotation", async () => {
 
 Deno.test("Select annotation", async () => {
   const actual = await withClient(async () => {
-    const dao = new TestDao(client);
+    const dao = new TestDao(client, "wine");
     return await dao.getAll();
   });
 
@@ -54,12 +54,12 @@ Deno.test("Mass update without db", () => {
 
 Deno.test("Mass update with db", async () => {
   const rowsUpdated = await withClient(async () => {
-    const dao = new TestDao(client);
+    const dao = new TestDao(client, "wine");
     return await dao.update(updatedWines);
   });
 
   const actual = await withClient(async () => {
-    const dao = new TestDao(client);
+    const dao = new TestDao(client, "wine");
     return await dao.getAll();
   });
 
@@ -69,7 +69,7 @@ Deno.test("Mass update with db", async () => {
 
 Deno.test("Dynamic parameter binding WHERE", async () => {
   const actual = await withClient(async () => {
-    const dao = new TestDao(client);
+    const dao = new TestDao(client, "wine");
     return await dao.getWineByDynamicId(1);
   });
 
@@ -78,7 +78,7 @@ Deno.test("Dynamic parameter binding WHERE", async () => {
 
 Deno.test("Complex dynamic parameter binding WHERE", async () => {
   const actual = await withClient(async () => {
-    const dao = new TestDao(client);
+    const dao = new TestDao(client, "wine");
     return await dao.complexWhereQuery(1, "F. Engel", "Pessac");
   });
 
@@ -87,12 +87,12 @@ Deno.test("Complex dynamic parameter binding WHERE", async () => {
 
 Deno.test("Delete annotation", async () => {
   const rowDeleted = await withClient(async () => {
-    const dao = new TestDao(client);
+    const dao = new TestDao(client, "wine");
     return await dao.delete();
   });
 
   const actual = await withClient(async () => {
-    const dao = new TestDao(client);
+    const dao = new TestDao(client, "wine");
     return await dao.getAll();
   });
 
@@ -102,7 +102,7 @@ Deno.test("Delete annotation", async () => {
 
 Deno.test("Query annotation", async () => {
   const actual = await withClient(async () => {
-    const dao = new TestDao(client);
+    const dao = new TestDao(client, "wine");
     return await dao.getWineById(2, 3);
   });
 
@@ -111,8 +111,8 @@ Deno.test("Query annotation", async () => {
 
 Deno.test("Transaction", async () => {
   const actual = await withClient(async () => {
-    const dao = new TestDao(client);
-    const oDao = new OtherDao(client);
+    const dao = new TestDao(client, "wine");
+    const oDao = new OtherDao(client, "wine");
 
     const success = await transaction([dao, oDao], async () => {
       await dao.getWineById(2, 3);

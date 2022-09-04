@@ -13,18 +13,17 @@ import {
 import { Where } from "../src/query/where.ts";
 
 export class TestDao extends Dao {
-  @Select("wine")
+  @Select()
   getAll(): Promise<Wine[]> {
     throw new Error();
   }
 
-  @Select("wine", new Where({ id: "°1" }))
+  @Select(new Where({ id: "°1" }))
   getWineByDynamicId(_id: number): Promise<Wine[]> {
     throw new Error();
   }
 
   @Select(
-    "wine",
     new Where({ id: "°1", is_organic: false, name: "°2", naming: "°3" }),
   )
   complexWhereQuery(
@@ -35,17 +34,17 @@ export class TestDao extends Dao {
     throw new Error();
   }
 
-  @Insert("wine")
+  @Insert()
   insert(_wines: Wine[]): Promise<number> {
     throw new Error();
   }
 
-  @Update("wine")
+  @Update()
   update(_wines: Wine[]): Promise<number> {
     throw new Error();
   }
 
-  @Delete("wine", new Where({ id: 1 }))
+  @Delete(new Where({ id: 1 }))
   delete(): Promise<number> {
     throw new Error();
   }
@@ -62,7 +61,7 @@ export class TestDao extends Dao {
 }
 
 export class OtherDao extends Dao {
-  @Select("wine")
+  @Select()
   getAll(): Promise<Wine[]> {
     throw new Error();
   }
