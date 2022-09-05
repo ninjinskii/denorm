@@ -28,10 +28,6 @@ export function Select(where?: Where) {
         .filter((field) => field.table === table)
         .map((field) => field.name);
 
-      console.log(query)
-      console.log(fields)
-      console.log(preparedArgs)
-
       const result = await client.queryObject({
         text: query,
         fields: names,
