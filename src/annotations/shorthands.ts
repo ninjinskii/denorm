@@ -24,6 +24,8 @@ export function Select(where?: Where) {
       const select = new SelectQuery(table).toText().text;
       const query = addWhere(select, where);
       const preparedArgs = where ? where.toText().args : [];
+
+      // TODO: find a way to rename fields without being depending of database column order.
       const names = fields
         .filter((field) => field.table === table)
         .map((field) => field.name);
