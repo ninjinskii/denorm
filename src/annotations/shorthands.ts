@@ -41,7 +41,7 @@ export function Select(where?: Where) {
   };
 }
 
-export function Query(query: string) {
+export function Query(query: string, aliases?: string[]) {
   return function (
     _target: any,
     _propertyKey: string,
@@ -49,7 +49,11 @@ export function Query(query: string) {
   ) {
     descriptor.value = async function (...args: any[]) {
       const client = assertClient(this);
-      const result = await client.queryObject({ text: query, args });
+      const result = await client.queryObject({
+        text: query,
+        args,
+        fields: aliases,
+      });
       return result.rows;
     };
 
@@ -118,9 +122,10 @@ export function Delete(where: Where) {
     _propertyKey: string,
     descriptor: PropertyDescriptor,
   ) {
-    descriptor.value = async function (..._args: string[]) {
+    descriptor.value = async function (...args: string[]) {
       const client = assertClient(this);
       const table = (this as Dao).tableName;
+      bindWhereParameters(args, where);
       const _delete = new DeleteQuery(table).toText().text;
       const query = addWhere(_delete, where);
       const preparedArgs = where.toText().args;
