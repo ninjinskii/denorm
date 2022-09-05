@@ -126,9 +126,10 @@ export function Delete(where: Where) {
     _propertyKey: string,
     descriptor: PropertyDescriptor,
   ) {
-    descriptor.value = async function (..._args: string[]) {
+    descriptor.value = async function (...args: string[]) {
       const client = assertClient(this);
       const table = (this as Dao).tableName;
+      bindWhereParameters(args, where);
       const _delete = new DeleteQuery(table).toText().text;
       const query = addWhere(_delete, where);
       const preparedArgs = where.toText().args;
