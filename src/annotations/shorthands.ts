@@ -134,9 +134,6 @@ export function Delete(where: Where) {
       const query = addWhere(_delete, where);
       const preparedArgs = where.toText().args;
 
-      console.log(query)
-      console.log(preparedArgs)
-
       const result = await client.queryObject({
         text: query,
         args: preparedArgs,
