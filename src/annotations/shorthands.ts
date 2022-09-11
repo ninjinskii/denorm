@@ -21,16 +21,17 @@ export function Select(where?: Where) {
       const client = assertClient(this);
       const table = (this as Dao).tableName;
       bindWhereParameters(args, where);
-      const select = new SelectQuery(table).toText().text;
+
+      const names = fields.filter((field) => field.table === table).map(
+        (field) => `${field.as} AS "${field.name}"` 
+      );
+
+      const select = new SelectQuery(table, ...names).toText().text;
       const query = addWhere(select, where);
       const preparedArgs = where ? where.toText().args : [];
-      const names = fields
-        .filter((field) => field.table === table)
-        .map((field) => field.name);
 
       const result = await client.queryObject({
         text: query,
-        fields: names,
         args: preparedArgs,
       });
 

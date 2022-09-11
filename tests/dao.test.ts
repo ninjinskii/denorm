@@ -27,7 +27,7 @@ Deno.test("Insert annotation", async () => {
   assertEquals(actual, 2);
 });
 
-Deno.test("Select annotation", async () => {
+Deno.test("Select annotation (USE SELECT)", async () => {
   const actual = await withClient(async () => {
     const dao = new TestDao(client, "wine");
     return await dao.getAll();
@@ -52,7 +52,7 @@ Deno.test("Mass update without db", () => {
   );
 });
 
-Deno.test("Mass update with db", async () => {
+Deno.test("Mass update with db (USE SELECT)", async () => {
   const rowsUpdated = await withClient(async () => {
     const dao = new TestDao(client, "wine");
     return await dao.update(updatedWines);
@@ -67,7 +67,7 @@ Deno.test("Mass update with db", async () => {
   assertEquals(actual, updatedWines);
 });
 
-Deno.test("Dynamic parameter binding WHERE", async () => {
+Deno.test("Dynamic parameter binding WHERE (USE SELECT)", async () => {
   const actual = await withClient(async () => {
     const dao = new TestDao(client, "wine");
     return await dao.getWineByDynamicId(1);
@@ -85,7 +85,7 @@ Deno.test("Complex dynamic parameter binding WHERE", async () => {
   assertEquals(actual[0], updatedWines[0]);
 });
 
-Deno.test("Delete annotation", async () => {
+Deno.test("Delete annotation (USE SELECT)", async () => {
   const rowDeleted = await withClient(async () => {
     const dao = new TestDao(client, "wine");
     return await dao.delete();
@@ -109,7 +109,7 @@ Deno.test("Query annotation", async () => {
   assertEquals(actual, [{ id: 2, name: "Pouilly", naming: "Ch" }]);
 });
 
-Deno.test("Transaction", async () => {
+Deno.test("Transaction (USE SELECT)", async () => {
   const actual = await withClient(async () => {
     const dao = new TestDao(client, "wine");
     const oDao = new OtherDao(client, "wine");
