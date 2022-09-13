@@ -79,6 +79,9 @@ Deno.test("Dynamic parameter binding WHERE (USE SELECT)", async () => {
 Deno.test("Complex dynamic parameter binding WHERE", async () => {
   const actual = await withClient(async () => {
     const dao = new TestDao(client, "wine");
+
+    // Test it twice to ensure good behaving of Where (see commit: Fix wrong where behavior on second query)
+    await dao.complexWhereQuery(2, "fail", "fail");
     return await dao.complexWhereQuery(1, "F. Engel", "Pessac");
   });
 

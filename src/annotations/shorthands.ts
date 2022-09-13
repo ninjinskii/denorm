@@ -20,15 +20,15 @@ export function Select(where?: Where) {
     descriptor.value = async function (...args: string[]) {
       const client = assertClient(this);
       const table = (this as Dao).tableName;
-      bindWhereParameters(args, where);
+      const boundedWhere = where ? bindWhereParameters(args, where) : null;
 
       const names = fields.filter((field) => field.table === table).map(
-        (field) => `${field.as} AS "${field.name}"` 
+        (field) => `${field.as} AS "${field.name}"`,
       );
 
       const select = new SelectQuery(table, ...names).toText().text;
-      const query = addWhere(select, where);
-      const preparedArgs = where ? where.toText().args : [];
+      const preparedArgs = boundedWhere ? boundedWhere.toText().args : [];
+      const query = addWhere(select, boundedWhere);
 
       const result = await client.queryObject({
         text: query,
@@ -126,10 +126,10 @@ export function Delete(where: Where) {
     descriptor.value = async function (...args: string[]) {
       const client = assertClient(this);
       const table = (this as Dao).tableName;
-      bindWhereParameters(args, where);
+      const boundedWhere = bindWhereParameters(args, where);
       const _delete = new DeleteQuery(table).toText().text;
-      const query = addWhere(_delete, where);
-      const preparedArgs = where.toText().args;
+      const query = addWhere(_delete, boundedWhere);
+      const preparedArgs = boundedWhere.toText().args;
 
       const result = await client.queryObject({
         text: query,
@@ -144,7 +144,7 @@ export function Delete(where: Where) {
 }
 
 function assertClient(context: any): Client {
-  if ((context as Dao).client) {
+  if ((context as Dao).client && context.client !== undefined) {
     return context.transaction || context.client;
   } else {
     throw new Error(
@@ -153,24 +153,24 @@ function assertClient(context: any): Client {
   }
 }
 
-function addWhere(base: string, where?: Where) {
-  if (where) {
-    const noTrailingSemiColon = base.slice(0, -1);
-    return `${noTrailingSemiColon} ${where.toText().text}`;
+function addWhere(base: string, where: Where | null) {
+  if (!where) {
+    return base;
   }
 
-  return base;
+  const noTrailingSemiColon = base.slice(0, -1);
+  return `${noTrailingSemiColon} ${where.toText().text}`;
 }
 
-function bindWhereParameters(args: any[], where?: Where) {
-  if (!where) {
-    return;
-  }
+function bindWhereParameters(args: any[], where: Where): Where {
+  const boundedConditions = { ...where.conditions };
 
-  for (const [key, value] of Object.entries(where.conditions)) {
+  for (const [key, value] of Object.entries(boundedConditions)) {
     if (typeof value === "string" && value.match(/°[1-9]{1,2}/g)) {
       const position = parseInt(value.substring(1));
-      where.conditions[key] = args[position - 1];
+      boundedConditions[key] = args[position - 1];
     }
   }
+
+  return new Where(boundedConditions);
 }
