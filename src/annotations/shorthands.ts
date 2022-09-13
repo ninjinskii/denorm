@@ -144,7 +144,7 @@ export function Delete(where: Where) {
 }
 
 function assertClient(context: any): Client {
-  if ((context as Dao).client) {
+  if ((context as Dao).client && context.client !== undefined) {
     return context.transaction || context.client;
   } else {
     throw new Error(
@@ -154,12 +154,12 @@ function assertClient(context: any): Client {
 }
 
 function addWhere(base: string, where?: Where) {
-  if (where) {
-    const noTrailingSemiColon = base.slice(0, -1);
-    return `${noTrailingSemiColon} ${where.toText().text}`;
+  if (!where) {
+    return base;
   }
 
-  return base;
+  const noTrailingSemiColon = base.slice(0, -1);
+  return `${noTrailingSemiColon} ${where.toText().text}`;
 }
 
 function bindWhereParameters(args: any[], where?: Where) {
