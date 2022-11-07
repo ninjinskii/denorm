@@ -11,7 +11,7 @@ Only 2 deps:
 
 ## ORM
 <b>What you will need for the ORM</b>
-* Add decorators to your model class
+* Add decorators to your model classes
 * Create DAOs
 * Call `initTable()` before instanting any of the model classes (or referencing their types)
 
@@ -41,7 +41,7 @@ export class MyModel {
 
 ### Create DAOs
 
-Daos will be your entry point for querying data.
+DAOs will be your entry point for querying data.
 You need to pass an instance of PostgresClient to the DAO constructor.
 See: https://deno-postgres.com/#/?id=connecting-to-your-db for more details on that.
 
@@ -56,18 +56,18 @@ export class WineDao extends Dao {
 }
 
 const client = new Client(databaseUrl);
-const dao = new WineDao();
+const dao = new WineDao(client);
 
 ```
 
 ### Call `initTables()` 
 
-> __IMPORTANT NOTE:__
+__IMPORTANT NOTE:__
 Run `initTables()` before trying to instantiate any of your model objects or even referencing the type, as it will break the annotation system.
 ```ts
 import { initTables } from "https://raw.githubusercontent.com/ninjinskii/denorm/master/mod.ts"
 
-await initTables(databaseUrl, [Wine, MyOtherModel])
+await initTables(client, [Wine, MyOtherModel])
 ```
 
 ## Query the database
@@ -76,7 +76,6 @@ To do basic queries you can use annotations shorthands:
 
 ### Shorthands
 Shorthands allows you to make the base CRUD queries as easy as an annotation.
-All shorthands will ask you for a table name as first parameter.
 Some of them can take an optionnal where parameter, which can only check single or multiple fields equality.
 For more complex queries, use `@Query` described below.
 
@@ -86,7 +85,7 @@ For more complex queries, use `@Query` described below.
 
 ```ts
 // Select all wines
-@Select("wine") // Pass the table name as argument
+@Select() // Pass the table name as argument
 getAllWines(): Promise<Wine[]> { // Set the return type that coresponds to the fetched data
   throw new Error(""); // The error will never be trigerred, but we throw it to avoid linter complaints.
 }
@@ -95,33 +94,34 @@ getAllWines(): Promise<Wine[]> { // Set the return type that coresponds to the f
 You can make some slightly more complex select using the where parameter (allows only the "=" operator):
 ```ts
 // Select object by id
-@Select("wine", new Where({ id: 1, name: "Riesling" })) // Pass where as argument.
+@Select(new Where({ id: 1, name: "Riesling" })) // Pass where as argument.
 getWineById(_id: number, _name: string): Promise<Wine[]> {
+  throw new Error("");
 }
 ```
 
 Dynamic parameters binding can be done by setting the value `"°<one-based index of parameter in function>"` to your condition.
 For instance:
-
 ```ts
-@Select("wine", new Where({ isOrganic: true, name: "°1" })) 
+@Select(new Where({ isOrganic: true, name: "°1" })) 
 getOrganicWinesForName(_name: string): Promise<Wine[]> {
+  throw new Error("");
 }
 ```
 
 #### INSERT
 
 ```ts
-@Insert("wine")
+@Insert()
 insertWines(_wines: Wine[]): Promise<number> { // Returns number of inserted rows
-  throw new Error(""); // The error will never be trigerred, but we throw it to avoid linter complaints.
+  throw new Error("");
 }
 ```
 
 #### UPDATE
 
 ```ts
-@Update("wine")
+@Update()
 updateWines(_wines: Wine[]): Promise<number> { // Returns number of rows affected
   throw new Error("");
 }
@@ -130,7 +130,7 @@ updateWines(_wines: Wine[]): Promise<number> { // Returns number of rows affecte
 #### DELETE
 
 ```ts
-@Delete("wine", new Where({ id: 1 })) // Returns number of deleted rows. Where is mandatory for Delete shorthand.
+@Delete(new Where({ id: 1 })) // Returns number of deleted rows. Where is mandatory for Delete shorthand.
 delete(): Promise<number> {
   throw new Error("");
 }
@@ -151,22 +151,21 @@ For more complex queries, see `@Query`:
 > Note that whatever query you will write inside @Query(), the function will always return an Array.
 > This array will be filled with resutlts in case of a SELECT statement.
 
-> Also, note that the parameters will automatically be binded. Parameters naming in WHERE is not necessary here.
+> Also, note that the parameters will automatically be bounded. Parameters naming in WHERE is not necessary here.
 
 ## Transactions
-To begin a transaction, call `transaction()` passing the list of DAOs needed, and a function.
+To begin a transaction, call `transaction()` passing the list of DAOs needed inside this transaction, and a function.
 ```ts
 import { transaction } from "https://raw.githubusercontent.com/ninjinskii/denorm/master/mod.ts"
 
 
-const success: boolean = await transaction([dao], async () => {
+const success: boolean = await transaction([dao, dao2], async () => {
   // Place all your queries here, e.g. dao.getAllWines(); dao2.getAllThing();
 });
 ```
 
 ## Advices for REST apis
 Make an interface that allows you to treat all DAOs as the same entity:
-
 ```ts
 export interface RestDao<T> {
   get(): Promise<T[]>
@@ -177,8 +176,8 @@ export interface RestDao<T> {
   ...
 }
 ```
-Create one DAO per collection, implementing RestDao.
 
+Create one DAO per collection, implementing RestDao.
 ```ts
 export class WineDao extends Dao implements RestDao<Wine> {
   @Select("wine")
@@ -199,7 +198,15 @@ export class WineDao extends Dao implements RestDao<Wine> {
 }
 ```
 
-Then you can create a mapping between your routes and your DAOs, and have a single function to execute all collections actions.
+Then you can create an object to your routes and your DAOs, and have a single function to execute all collections actions in your favorite web framework.
+```ts
+const mapper: { [path: string]: RestDao }  = {
+  "/wines": new WineDao(client)
+  ...
+}
+
+on(get) => mapper[request.path].getAll()
+```
 
 ## Run the project locally
 ```bash
