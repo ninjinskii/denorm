@@ -31,3 +31,9 @@ services:
       - PGDATA=/var/lib/postgresql/data/denorm
     volumes:
       - /var/lib/postgresql/data/denorm:/var/lib/postgresql/data/denorm
+
+  githooks:
+    image: githooks:latest
+    volumes: 
+      - ./.git:/tmp/.git
+      - ./.githooks:/tmp/.githooks
