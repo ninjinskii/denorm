@@ -6,7 +6,7 @@ Low chance to let you down in production because of unavailable depedencies.
 
 Only 2 deps:
 * https://deno.land/x/postgres/mod.ts
-* https://deno.land/std@0.137.0/testing/asserts.ts;
+* https://deno.land/x/testing/asserts.ts;
 
 
 ## ORM

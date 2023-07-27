@@ -94,7 +94,7 @@ export function Field(
 ) {
   return function (
     target: any,
-    _propertyKey: string | symbol,
+    _propertyKey: string | symbol | undefined,
     parameterIndex: number,
   ) {
     processAnnotation(target, parameterIndex, type, false, nullable, as);
@@ -109,7 +109,7 @@ export function SizedField(
 ) {
   return function (
     target: any,
-    _propertyKey: string | symbol,
+    _propertyKey: string | symbol | undefined,
     parameterIndex: number,
   ) {
     if (!(type in SizeableType)) {
@@ -125,7 +125,7 @@ export function SizedField(
 export function PrimaryKey(type: Type, as?: string) {
   return function (
     target: any,
-    _propertyKey: string | symbol,
+    _propertyKey: string | symbol | undefined,
     parameterIndex: number,
   ) {
     processAnnotation(target, parameterIndex, type, true, Nullable.NO, as);

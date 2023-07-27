@@ -14,7 +14,7 @@ import { transaction } from "../transaction/transaction.ts";
 export function Select(where?: Where) {
   return function (
     _target: any,
-    _propertyKey: string,
+    _propertyKey: string | symbol | undefined,
     descriptor: PropertyDescriptor,
   ) {
     descriptor.value = async function (...args: string[]) {
@@ -45,7 +45,7 @@ export function Select(where?: Where) {
 export function Query(query: string, aliases?: string[]) {
   return function (
     _target: any,
-    _propertyKey: string,
+    _propertyKey: string | symbol | undefined,
     descriptor: PropertyDescriptor,
   ) {
     descriptor.value = async function (...args: any[]) {
@@ -65,7 +65,7 @@ export function Query(query: string, aliases?: string[]) {
 export function Insert() {
   return function (
     _target: any,
-    _propertyKey: string,
+    _propertyKey: string | symbol | undefined,
     descriptor: PropertyDescriptor,
   ) {
     descriptor.value = async function (args: any[]) {
@@ -83,7 +83,7 @@ export function Insert() {
 export function Update() {
   return function (
     _target: any,
-    _propertyKey: string,
+    _propertyKey: string | symbol | undefined,
     descriptor: PropertyDescriptor,
   ) {
     descriptor.value = async function (...args: any[]) {
@@ -120,7 +120,7 @@ export function Update() {
 export function Delete(where: Where) {
   return function (
     _target: any,
-    _propertyKey: string,
+    _propertyKey: string | symbol | undefined,
     descriptor: PropertyDescriptor,
   ) {
     descriptor.value = async function (...args: string[]) {
